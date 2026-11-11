@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useAuth } from '../context/AuthContext';
-import { api } from '../services/api';
 import { QuotaBadge } from './QuotaBadge';
 import {
   Layers,
@@ -10,37 +9,10 @@ import {
   Gavel,
   CheckSquare,
   LogOut,
-  UserCheck,
-  ChevronDown,
 } from 'lucide-react';
 
 export const Navbar = ({ currentTab, onSelectTab }) => {
-  const { user, logout, login, isAdmin, isDesigner, showToast } = useAuth();
-  const [showSwitcher, setShowSwitcher] = useState(false);
-  const [registeredDesigners, setRegisteredDesigners] = useState([]);
-
-  // Fetch real database-stored designers when switcher is opened
-  useEffect(() => {
-    if (showSwitcher) {
-      api.getDesigners()
-        .then((res) => {
-          if (res.success) setRegisteredDesigners(res.data || []);
-        })
-        .catch(() => {});
-    }
-  }, [showSwitcher]);
-
-  const handleQuickSwitchAdmin = async () => {
-    try {
-      setShowSwitcher(false);
-      await login('admin@platform.com', 'admin123');
-      onSelectTab('projects');
-      showToast('Switched to Admin Director', 'success');
-    } catch (err) {
-      showToast(err.message, 'error');
-    }
-  };
-
+  const { user, logout, isAdmin, isDesigner } = useAuth();
 
   return (
     <nav className="navbar" id="main-navigation">
@@ -130,7 +102,7 @@ export const Navbar = ({ currentTab, onSelectTab }) => {
           )}
         </div>
 
-        {/* Right Section: Quota, Quick Demo Switcher, Profile */}
+        {/* Right Section: Quota & User Profile with Logout */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           {isDesigner && (
             <QuotaBadge
@@ -138,100 +110,6 @@ export const Navbar = ({ currentTab, onSelectTab }) => {
               max={user.maxActiveAssignments || 3}
             />
           )}
-
-          {/* Quick Demo Switcher Dropdown */}
-          <div style={{ position: 'relative' }}>
-            <button
-              onClick={() => setShowSwitcher(!showSwitcher)}
-              className="btn btn-secondary btn-sm"
-              style={{ fontSize: '0.78rem', padding: '0.35rem 0.65rem' }}
-              title="Quick switch demo test user"
-              id="btn-switch-account"
-            >
-              <UserCheck size={14} color="#818cf8" />
-              <span>Switch User</span>
-              <ChevronDown size={12} />
-            </button>
-
-            {showSwitcher && (
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '120%',
-                  right: 0,
-                  width: '260px',
-                  background: 'var(--bg-surface-elevated)',
-                  border: '1px solid var(--border-light)',
-                  borderRadius: 'var(--radius-md)',
-                  boxShadow: 'var(--shadow-lg)',
-                  padding: '0.6rem',
-                  zIndex: 100,
-                }}
-              >
-                <div style={{ fontSize: '0.72rem', color: 'var(--text-dim)', padding: '0.2rem 0.5rem', fontWeight: 700, textTransform: 'uppercase' }}>
-                  Maintained Admin (Seed)
-                </div>
-                <button
-                  type="button"
-                  onClick={handleQuickSwitchAdmin}
-                  style={{
-                    width: '100%',
-                    textAlign: 'left',
-                    padding: '0.5rem 0.65rem',
-                    borderRadius: '6px',
-                    background: isAdmin ? 'rgba(99, 102, 241, 0.15)' : 'transparent',
-                    color: isAdmin ? '#818cf8' : 'var(--text-main)',
-                    fontSize: '0.82rem',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '2px',
-                    border: 'none',
-                    cursor: 'pointer',
-                    marginBottom: '0.5rem',
-                  }}
-                  id="btn-switch-admin"
-                >
-                  <span style={{ fontWeight: 600 }}>Admin (Lead Director)</span>
-                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>admin@platform.com</span>
-                </button>
-
-                <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '0.5rem', marginTop: '0.3rem' }}>
-                  <div style={{ fontSize: '0.72rem', color: 'var(--text-dim)', padding: '0.2rem 0.5rem', fontWeight: 700, textTransform: 'uppercase' }}>
-                    Registered Designers in DB ({registeredDesigners.length})
-                  </div>
-                  {registeredDesigners.length === 0 ? (
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', padding: '0.4rem 0.5rem' }}>
-                      No designers yet. Create designer accounts in the Designer Accounts tab.
-                    </div>
-                  ) : (
-                    registeredDesigners.slice(0, 5).map((d) => (
-                      <div
-                        key={d._id}
-                        style={{
-                          padding: '0.4rem 0.5rem',
-                          borderRadius: '6px',
-                          background: user?._id === d._id ? 'rgba(6, 182, 212, 0.15)' : 'transparent',
-                          color: user?._id === d._id ? '#38bdf8' : 'var(--text-main)',
-                          fontSize: '0.8rem',
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                        }}
-                      >
-                        <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          <span style={{ fontWeight: 600, display: 'block' }}>{d.name}</span>
-                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{d.email}</span>
-                        </div>
-                        <span style={{ fontSize: '0.68rem', color: d.isActive ? '#34d399' : '#fb7185' }}>
-                          {d.isActive ? 'Active' : 'Suspended'}
-                        </span>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
 
           {/* User Profile Pill */}
           {user && (

@@ -54,15 +54,6 @@ const startServer = async () => {
   try {
     // Connect to MongoDB
     await connectDB();
-    
-    // Ensure Administrator account exists in database (seed only maintains admin)
-    const User = require('./models/User');
-    const adminExists = await User.findOne({ role: 'admin' });
-    if (!adminExists) {
-      console.log('[Server] Admin account not found. Maintaining admin credentials in database...');
-      const seedData = require('./utils/seed');
-      await seedData(false);
-    }
 
     const server = app.listen(PORT, () => {
       console.log(`[Server] EVO ART Designer Platform running on port ${PORT}`);

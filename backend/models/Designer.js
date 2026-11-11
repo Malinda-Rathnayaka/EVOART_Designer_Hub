@@ -1,0 +1,68 @@
+const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
+
+// Logical Area 1: Designer Schema definition (stores Designer accounts in MongoDB 'designers' collection)
+const designerSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: [true, 'Please provide a name'],
+      trim: true,
+    },
+    email: {
+      type: String,
+      required: [true, 'Please provide an email'],
+      unique: true,
+      lowercase: true,
+      trim: true,
+      match: [
+        /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/,
+        'Please provide a valid email address',
+      ],
+    },
+    password: {
+      type: String,
+      required: [true, 'Please provide a password'],
+      minlength: [6, 'Password must be at least 6 characters'],
+      select: false,
+    },
+    role: {
+      type: String,
+      default: 'designer',
+      immutable: true,
+    },
+    bio: {
+      type: String,
+      default: '',
+    },
+    skills: {
+      type: [String],
+      default: [],
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+// Logical Area 2: Pre-save hook to hash password with bcrypt before saving to MongoDB
+designerSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) {
+    return next();
+  }
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+  next();
+});
+
+// Logical Area 3: Method to compare entered password against hashed password in database
+designerSchema.methods.matchPassword = async function (enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
+};
+
+// Logical Area 4: Explicitly map to 'designers' collection in MongoDB
+module.exports = mongoose.model('Designer', designerSchema, 'designers');

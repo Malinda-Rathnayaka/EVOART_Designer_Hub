@@ -84,6 +84,20 @@ export const AuthProvider = ({ children }) => {
     showToast('Logged out successfully', 'success');
   };
 
+  const updateProfile = async (profileData) => {
+    const res = await api.updateProfile(profileData);
+    if (res.success && res.data) {
+      setUser((prev) => {
+        const updated = { ...prev, ...res.data };
+        localStorage.setItem('user', JSON.stringify(updated));
+        return updated;
+      });
+      showToast('Profile updated successfully', 'success');
+      return res.data;
+    }
+    throw new Error(res.message || 'Profile update failed');
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -91,6 +105,7 @@ export const AuthProvider = ({ children }) => {
         loading,
         login,
         logout,
+        updateProfile,
         refreshUser,
         toast,
         showToast,

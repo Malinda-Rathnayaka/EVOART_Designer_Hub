@@ -128,4 +128,116 @@ const getMe = async (req, res, next) => {
   }
 };
 
-module.exports = { login, getMe };
+// @desc    Update the authenticated user's profile
+// @route   PUT /api/auth/profile
+// @access  Private
+const updateProfile = async (req, res, next) => {
+  try {
+    const { name, bio, skills, currentPassword, newPassword, confirmPassword } = req.body;
+    const updates = {};
+    const changingPassword = Boolean(currentPassword || newPassword || confirmPassword);
+
+    if (name !== undefined) {
+      if (typeof name !== 'string' || !name.trim()) {
+        return res.status(400).json({
+          success: false,
+          message: 'Name cannot be empty',
+        });
+      }
+      updates.name = name.trim();
+    }
+
+    if (bio !== undefined) {
+      if (typeof bio !== 'string') {
+        return res.status(400).json({
+          success: false,
+          message: 'Bio must be text',
+        });
+      }
+      updates.bio = bio.trim();
+    }
+
+    if (skills !== undefined) {
+      if (!Array.isArray(skills) && typeof skills !== 'string') {
+        return res.status(400).json({
+          success: false,
+          message: 'Skills must be a comma-separated list',
+        });
+      }
+      updates.skills = Array.isArray(skills)
+        ? skills.map((skill) => String(skill).trim()).filter(Boolean)
+        : skills.split(',').map((skill) => skill.trim()).filter(Boolean);
+    }
+
+    if (changingPassword) {
+      if (!currentPassword || !newPassword || !confirmPassword) {
+        return res.status(400).json({
+          success: false,
+          message: 'Current password, new password, and password confirmation are required',
+        });
+      }
+
+      if (typeof currentPassword !== 'string' || typeof newPassword !== 'string' || typeof confirmPassword !== 'string') {
+        return res.status(400).json({
+          success: false,
+          message: 'Password values must be text',
+        });
+      }
+
+      if (newPassword.length < 6) {
+        return res.status(400).json({
+          success: false,
+          message: 'Password must be at least 6 characters long',
+        });
+      }
+
+      if (newPassword !== confirmPassword) {
+        return res.status(400).json({
+          success: false,
+          message: 'New password and confirmation do not match',
+        });
+      }
+    }
+
+    const Model = req.user.role === 'designer' ? Designer : User;
+    const user = await Model.findById(req.user._id).select('+password');
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found in database',
+      });
+    }
+
+    if (changingPassword && !(await user.matchPassword(currentPassword))) {
+      return res.status(401).json({
+        success: false,
+        message: 'Current password is incorrect',
+      });
+    }
+
+    Object.assign(user, updates);
+    if (changingPassword) {
+      user.password = newPassword;
+    }
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'Profile updated successfully',
+      data: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        bio: user.bio,
+        skills: user.skills,
+        isActive: user.isActive,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = { login, getMe, updateProfile };

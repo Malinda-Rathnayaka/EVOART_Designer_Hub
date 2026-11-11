@@ -9,9 +9,10 @@ import {
   Gavel,
   CheckSquare,
   LogOut,
+  Settings,
 } from 'lucide-react';
 
-export const Navbar = ({ currentTab, onSelectTab }) => {
+export const Navbar = ({ currentTab, onSelectTab, onProfileClick }) => {
   const { user, logout, isAdmin, isDesigner } = useAuth();
 
   return (
@@ -114,6 +115,16 @@ export const Navbar = ({ currentTab, onSelectTab }) => {
           {/* User Profile Pill */}
           {user && (
             <div
+              role="button"
+              tabIndex={0}
+              onClick={onProfileClick}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  onProfileClick();
+                }
+              }}
+              title="Customize your profile"
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -122,6 +133,8 @@ export const Navbar = ({ currentTab, onSelectTab }) => {
                 borderRadius: 'var(--radius-md)',
                 background: 'rgba(255, 255, 255, 0.04)',
                 border: '1px solid var(--border-light)',
+                color: 'inherit',
+                cursor: 'pointer',
               }}
             >
               <div
@@ -146,8 +159,12 @@ export const Navbar = ({ currentTab, onSelectTab }) => {
                   {user.role}
                 </span>
               </div>
+              <Settings size={14} color="var(--text-muted)" />
               <button
-                onClick={logout}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  logout();
+                }}
                 className="btn btn-secondary btn-icon-only"
                 style={{ padding: '0.3rem', marginLeft: '0.35rem' }}
                 title="Log out"

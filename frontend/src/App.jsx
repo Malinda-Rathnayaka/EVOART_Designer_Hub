@@ -10,11 +10,13 @@ import { DesignerDashboard } from './pages/DesignerDashboard';
 import { DesignerBidsPage } from './pages/DesignerBidsPage';
 import { DesignerAssignmentsPage } from './pages/DesignerAssignmentsPage';
 import { ProjectDetailsPage } from './pages/ProjectDetailsPage';
+import { ProfileModal } from './components/ProfileModal';
 
 function AppContent() {
   const { user, loading, isAdmin, isDesigner } = useAuth();
   const [currentTab, setCurrentTab] = useState(() => (user?.role === 'designer' ? 'explore' : 'projects'));
   const [selectedProject, setSelectedProject] = useState(null);
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   // Automatically adjust default active tab when logged-in user or role changes
   useEffect(() => {
@@ -65,7 +67,7 @@ function AppContent() {
 
   return (
     <div className="app-container">
-      <Navbar currentTab={currentTab} onSelectTab={handleSelectTab} />
+      <Navbar currentTab={currentTab} onSelectTab={handleSelectTab} onProfileClick={() => setShowProfileModal(true)} />
 
       <main className="main-content">
         {/* Project Details View */}
@@ -101,6 +103,7 @@ function AppContent() {
       </main>
 
       <Toast />
+      {showProfileModal && <ProfileModal onClose={() => setShowProfileModal(false)} />}
     </div>
   );
 }

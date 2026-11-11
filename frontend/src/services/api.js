@@ -56,6 +56,11 @@ export const api = {
       body: JSON.stringify({ email, password }),
     }),
   getMe: () => request('/auth/me'),
+  updateProfile: (profileData) =>
+    request('/auth/profile', {
+      method: 'PUT',
+      body: JSON.stringify(profileData),
+    }),
 
   // Designers (Admin)
   getDesigners: () => request('/users/designers'),

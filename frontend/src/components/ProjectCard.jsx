@@ -3,15 +3,14 @@ import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import {
   Calendar,
-  DollarSign,
-  FileText,
   Gavel,
   CheckCircle2,
-  Clock,
   Lock,
   Unlock,
   Eye,
   Paperclip,
+  Pencil,
+  Image as ImageIcon,
 } from 'lucide-react';
 
 export const ProjectCard = ({
@@ -20,6 +19,7 @@ export const ProjectCard = ({
   onOpenAwardModal,
   onToggleBidding,
   onViewDetails,
+  onEditProject,   // Admin-only: opens the edit modal for this project
 }) => {
   const { isAdmin, isDesigner, user } = useAuth();
 
@@ -41,53 +41,194 @@ export const ProjectCard = ({
     (new Date(project.deadline) - new Date()) / (1000 * 60 * 60 * 24)
   );
 
+  // Logical Area: Identify attached reference image (Cloudinary or local)
+  const isImageFile = (file) => {
+    if (!file) return false;
+    if (file.mimetype && file.mimetype.startsWith('image/')) return true;
+    const name = file.originalName || file.filename || file.path || file.url || '';
+    return /\.(jpe?g|png|webp|gif|svg|avif)$/i.test(name);
+  };
+
+  const imageFiles = (project.referenceFiles || []).filter(isImageFile);
+  const primaryImage = imageFiles[0];
+  const primaryImageUrl = primaryImage
+    ? primaryImage.url || api.getFileUrl('references', primaryImage.filename)
+    : null;
+
   return (
-    <div className="glass-card interactive-card" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <div style={{ padding: '1.5rem', flex: 1, display: 'flex', flexDirection: 'column' }}>
-        {/* Header Badges */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', marginBottom: '0.85rem' }}>
+    <div
+      className="glass-card interactive-card"
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        overflow: 'hidden',
+        padding: 0,
+      }}
+    >
+      {/* Top Reference Image Banner */}
+      <div
+        style={{
+          position: 'relative',
+          width: '100%',
+          height: '175px',
+          background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.16) 0%, rgba(6, 182, 212, 0.1) 100%)',
+          overflow: 'hidden',
+          cursor: 'pointer',
+        }}
+        onClick={() => onViewDetails(project)}
+      >
+        {primaryImageUrl ? (
+          <>
+            <img
+              src={primaryImageUrl}
+              alt={project.title}
+              className="card-media-img"
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                display: 'block',
+              }}
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+              }}
+            />
+            {/* Subtle Gradient Scrim for contrast */}
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                background:
+                  'linear-gradient(180deg, rgba(9, 12, 19, 0.4) 0%, rgba(9, 12, 19, 0.05) 50%, rgba(9, 12, 19, 0.8) 100%)',
+                pointerEvents: 'none',
+              }}
+            />
+          </>
+        ) : (
+          /* Sleek Graphic Placeholder when brief has no reference image */
+          <div
+            style={{
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.45rem',
+              background:
+                'radial-gradient(ellipse at 50% 50%, rgba(99, 102, 241, 0.22) 0%, rgba(15, 20, 34, 0.88) 100%)',
+            }}
+          >
+            <div
+              style={{
+                width: '42px',
+                height: '42px',
+                borderRadius: '10px',
+                background: 'rgba(255, 255, 255, 0.04)',
+                border: '1px solid var(--border-light)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <ImageIcon size={20} color="var(--accent-primary)" />
+            </div>
+            <span
+              style={{
+                fontSize: '0.72rem',
+                letterSpacing: '0.04em',
+                textTransform: 'uppercase',
+                fontWeight: 600,
+                color: 'var(--text-dim)',
+              }}
+            >
+              Design Brief
+            </span>
+          </div>
+        )}
+
+        {/* Floating Category Badge (Top Left) */}
+        <div style={{ position: 'absolute', top: '0.75rem', left: '0.75rem', zIndex: 2 }}>
           <span
             style={{
-              fontSize: '0.75rem',
+              fontSize: '0.7rem',
               fontWeight: 700,
-              color: 'var(--accent-cyan)',
-              background: 'rgba(6, 182, 212, 0.1)',
-              padding: '0.2rem 0.6rem',
+              color: '#ffffff',
+              background: 'rgba(15, 20, 34, 0.82)',
+              backdropFilter: 'blur(8px)',
+              padding: '0.22rem 0.55rem',
               borderRadius: '6px',
-              border: '1px solid rgba(6, 182, 212, 0.25)',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
               textTransform: 'uppercase',
+              letterSpacing: '0.03em',
+              display: 'inline-block',
             }}
           >
             {project.category || 'General Design'}
           </span>
-
-          <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
-            {isAssigned ? (
-              <span className="badge badge-progress">
-                <CheckCircle2 size={12} />
-                Assigned
-              </span>
-            ) : isBiddingOpen ? (
-              <span className="badge badge-open">
-                <Unlock size={12} />
-                Bidding Open
-              </span>
-            ) : (
-              <span className="badge badge-closed">
-                <Lock size={12} />
-                Bidding Closed
-              </span>
-            )}
-          </div>
         </div>
 
+        {/* Floating Bidding Status Badge (Top Right) */}
+        <div style={{ position: 'absolute', top: '0.75rem', right: '0.75rem', zIndex: 2 }}>
+          {isAssigned ? (
+            <span className="badge badge-progress" style={{ backdropFilter: 'blur(8px)' }}>
+              <CheckCircle2 size={12} />
+              Assigned
+            </span>
+          ) : isBiddingOpen ? (
+            <span className="badge badge-open" style={{ backdropFilter: 'blur(8px)' }}>
+              <Unlock size={12} />
+              Bidding Open
+            </span>
+          ) : (
+            <span className="badge badge-closed" style={{ backdropFilter: 'blur(8px)' }}>
+              <Lock size={12} />
+              Bidding Closed
+            </span>
+          )}
+        </div>
+
+        {/* Floating Reference Assets Counter Pill (Bottom Right) */}
+        {project.referenceFiles && project.referenceFiles.length > 0 && (
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '0.65rem',
+              right: '0.75rem',
+              zIndex: 2,
+              fontSize: '0.7rem',
+              fontWeight: 600,
+              color: '#ffffff',
+              background: 'rgba(15, 20, 34, 0.85)',
+              backdropFilter: 'blur(8px)',
+              padding: '0.2rem 0.55rem',
+              borderRadius: '6px',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+            }}
+          >
+            <Paperclip size={11} color="var(--accent-cyan)" />
+            <span>
+              {project.referenceFiles.length}{' '}
+              {project.referenceFiles.length === 1 ? 'Reference' : 'References'}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Card Content Body */}
+      <div style={{ padding: '1.25rem 1.4rem', flex: 1, display: 'flex', flexDirection: 'column' }}>
         {/* Project Title */}
         <h3
           style={{
             fontSize: '1.15rem',
-            marginBottom: '0.65rem',
+            marginBottom: '0.5rem',
             cursor: 'pointer',
             lineHeight: 1.35,
+            fontWeight: 700,
           }}
           onClick={() => onViewDetails(project)}
           title={project.title}
@@ -98,14 +239,15 @@ export const ProjectCard = ({
         {/* Description snippet */}
         <p
           style={{
-            fontSize: '0.88rem',
+            fontSize: '0.86rem',
             color: 'var(--text-muted)',
-            marginBottom: '1.25rem',
+            marginBottom: '1rem',
             flex: 1,
             display: '-webkit-box',
-            WebkitLineClamp: 3,
+            WebkitLineClamp: 2,
             WebkitBoxOrient: 'vertical',
             overflow: 'hidden',
+            lineHeight: 1.45,
           }}
         >
           {project.description}
@@ -117,66 +259,49 @@ export const ProjectCard = ({
             display: 'grid',
             gridTemplateColumns: '1fr 1fr',
             gap: '0.75rem',
-            padding: '0.85rem 1rem',
+            padding: '0.75rem 0.9rem',
             background: 'rgba(255, 255, 255, 0.02)',
             borderRadius: 'var(--radius-md)',
             border: '1px solid var(--border-subtle)',
-            marginBottom: '1.25rem',
+            marginBottom: '1rem',
           }}
         >
           <div>
-            <div style={{ fontSize: '0.72rem', color: 'var(--text-dim)', textTransform: 'uppercase', fontWeight: 600 }}>
-              Initial Project Price
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', fontWeight: 600 }}>
+              Initial Price
             </div>
-            <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center' }}>
+            <div style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center' }}>
               <span style={{ color: 'var(--accent-emerald)', marginRight: 2 }}>$</span>
               {project.initialPrice?.toLocaleString()}
             </div>
           </div>
 
           <div>
-            <div style={{ fontSize: '0.72rem', color: 'var(--text-dim)', textTransform: 'uppercase', fontWeight: 600 }}>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', fontWeight: 600 }}>
               Deadline
             </div>
             <div
               style={{
-                fontSize: '0.88rem',
+                fontSize: '0.85rem',
                 fontWeight: 600,
                 color: daysLeft <= 3 ? '#fb7185' : 'var(--text-main)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.35rem',
-                marginTop: '0.25rem',
+                marginTop: '0.2rem',
               }}
             >
-              <Calendar size={14} color="var(--accent-cyan)" />
+              <Calendar size={13} color="var(--accent-cyan)" />
               {formattedDeadline}
             </div>
           </div>
         </div>
 
-        {/* Reference Files count if present */}
-        {project.referenceFiles && project.referenceFiles.length > 0 && (
-          <div
-            style={{
-              fontSize: '0.8rem',
-              color: 'var(--text-muted)',
-              marginBottom: '1rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-            }}
-          >
-            <Paperclip size={14} color="var(--text-dim)" />
-            <span>{project.referenceFiles.length} Reference File(s) attached</span>
-          </div>
-        )}
-
         {/* Designer Bid Status Banner (Strict Bid Privacy) */}
         {isDesigner && project.myBid && (
           <div
             style={{
-              padding: '0.65rem 0.85rem',
+              padding: '0.6rem 0.8rem',
               borderRadius: '8px',
               background: 'rgba(99, 102, 241, 0.1)',
               border: '1px solid rgba(99, 102, 241, 0.25)',
@@ -221,6 +346,16 @@ export const ProjectCard = ({
               >
                 <Eye size={14} />
                 Details
+              </button>
+
+              {/* Edit button — admin only; opens edit modal pre-populated with project data */}
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={() => onEditProject && onEditProject(project)}
+                title="Edit project details"
+              >
+                <Pencil size={14} />
+                Edit
               </button>
 
               <button

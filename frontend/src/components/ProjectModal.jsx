@@ -1,17 +1,30 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
-import { X, FolderPlus, UploadCloud, File, AlertCircle } from 'lucide-react';
+import { X, FolderPlus, Pencil, UploadCloud, File, AlertCircle, Image as ImageIcon } from 'lucide-react';
 
-export const ProjectModal = ({ onClose, onSuccess }) => {
+// Accepts optional `project` prop — if provided the modal runs in Edit mode,
+// otherwise it runs in Create mode.
+export const ProjectModal = ({ onClose, onSuccess, project }) => {
   const { showToast } = useAuth();
-  const [title, setTitle] = useState('');
-  const [category, setCategory] = useState('UI/UX Design');
-  const [description, setDescription] = useState('');
-  const [initialPrice, setInitialPrice] = useState('');
-  const [deadline, setDeadline] = useState('');
-  const [biddingStatus, setBiddingStatus] = useState('open');
-  const [referenceFiles, setReferenceFiles] = useState([]);
+
+  // --- Determine mode ---
+  const isEditMode = Boolean(project);
+
+  // Helper: convert ISO date string → "YYYY-MM-DD" for <input type="date">
+  const toDateInput = (iso) => {
+    if (!iso) return '';
+    return new Date(iso).toISOString().split('T')[0];
+  };
+
+  // --- Pre-populate fields from project when in Edit mode ---
+  const [title, setTitle] = useState(isEditMode ? project.title : '');
+  const [category, setCategory] = useState(isEditMode ? project.category : 'UI/UX Design');
+  const [description, setDescription] = useState(isEditMode ? project.description : '');
+  const [initialPrice, setInitialPrice] = useState(isEditMode ? project.initialPrice : '');
+  const [deadline, setDeadline] = useState(isEditMode ? toDateInput(project.deadline) : '');
+  const [biddingStatus, setBiddingStatus] = useState(isEditMode ? project.biddingStatus : 'open');
+  const [referenceFiles, setReferenceFiles] = useState([]); // new uploads only
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -45,16 +58,25 @@ export const ProjectModal = ({ onClose, onSuccess }) => {
       formData.append('deadline', deadline);
       formData.append('biddingStatus', biddingStatus);
 
+      // Attach any new files selected by admin
       referenceFiles.forEach((file) => {
         formData.append('referenceFiles', file);
       });
 
-      await api.createProject(formData);
-      showToast('New project created successfully!', 'success');
+      if (isEditMode) {
+        // Edit mode: call updateProject with existing project ID
+        await api.updateProject(project._id, formData);
+        showToast('Project updated successfully!', 'success');
+      } else {
+        // Create mode: publish a brand-new project
+        await api.createProject(formData);
+        showToast('New project created successfully!', 'success');
+      }
+
       onSuccess();
       onClose();
     } catch (err) {
-      setError(err.message || 'Failed to create project');
+      setError(err.message || (isEditMode ? 'Failed to update project' : 'Failed to create project'));
       showToast(err.message, 'error');
     } finally {
       setSubmitting(false);
@@ -71,19 +93,24 @@ export const ProjectModal = ({ onClose, onSuccess }) => {
                 width: '34px',
                 height: '34px',
                 borderRadius: '8px',
-                background: 'rgba(99, 102, 241, 0.15)',
+                background: isEditMode ? 'rgba(6, 182, 212, 0.15)' : 'rgba(99, 102, 241, 0.15)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: 'var(--accent-primary)',
+                color: isEditMode ? 'var(--accent-cyan)' : 'var(--accent-primary)',
               }}
             >
-              <FolderPlus size={20} />
+              {/* Icon switches based on mode */}
+              {isEditMode ? <Pencil size={18} /> : <FolderPlus size={20} />}
             </div>
             <div>
-              <h3 style={{ fontSize: '1.2rem' }}>Create New Design Project</h3>
+              <h3 style={{ fontSize: '1.2rem' }}>
+                {isEditMode ? 'Edit Design Project' : 'Create New Design Project'}
+              </h3>
               <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                Set specifications, budget, deadline, and reference files
+                {isEditMode
+                  ? 'Update project details — new reference files will be appended'
+                  : 'Set specifications, budget, deadline, and reference files'}
               </p>
             </div>
           </div>
@@ -203,13 +230,59 @@ export const ProjectModal = ({ onClose, onSuccess }) => {
             {/* Reference Files Upload */}
             <div className="form-group">
               <label className="form-label">Attach Project Reference Images / Briefs</label>
+
+              {/* In edit mode: show existing files so admin knows what's already attached */}
+              {isEditMode && project.referenceFiles && project.referenceFiles.length > 0 && (
+                <div style={{ marginBottom: '0.75rem' }}>
+                  <div style={{ fontSize: '0.74rem', color: 'var(--text-dim)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                    Already Attached ({project.referenceFiles.length})
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                    {project.referenceFiles.map((f, i) => {
+                      const isImage = f.mimetype?.startsWith('image/') || /\.(jpe?g|png|webp|gif|svg)$/i.test(f.originalName || '');
+                      return (
+                        <div
+                          key={i}
+                          style={{
+                            padding: '0.4rem 0.75rem',
+                            background: 'rgba(255, 255, 255, 0.025)',
+                            borderRadius: '6px',
+                            border: '1px solid var(--border-subtle)',
+                            fontSize: '0.8rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            color: 'var(--text-muted)',
+                          }}
+                        >
+                          {/* Thumbnail preview for image files */}
+                          {isImage && f.url ? (
+                            <img
+                              src={f.url}
+                              alt={f.originalName}
+                              style={{ width: '28px', height: '28px', objectFit: 'cover', borderRadius: '4px', flexShrink: 0 }}
+                            />
+                          ) : (
+                            <ImageIcon size={14} color="var(--accent-cyan)" style={{ flexShrink: 0 }} />
+                          )}
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {f.originalName || f.filename}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Upload zone for new files */}
               <div
                 className="file-upload-zone"
                 onClick={() => document.getElementById('project-files-input').click()}
               >
                 <UploadCloud size={28} color="#818cf8" style={{ margin: '0 auto 0.4rem auto' }} />
                 <div style={{ fontWeight: 600, fontSize: '0.88rem' }}>
-                  Click to upload moodboards, wireframes, or specs
+                  {isEditMode ? 'Click to append additional reference files' : 'Click to upload moodboards, wireframes, or specs'}
                 </div>
                 <div style={{ fontSize: '0.72rem', color: 'var(--text-dim)' }}>
                   PNG, JPG, SVG, PDF, FIG (Max 50MB per file)
@@ -263,7 +336,10 @@ export const ProjectModal = ({ onClose, onSuccess }) => {
               disabled={submitting}
               id="btn-confirm-create-project"
             >
-              {submitting ? 'Creating Project...' : 'Publish Project'}
+              {/* Label changes based on mode and submission state */}
+              {submitting
+                ? isEditMode ? 'Saving Changes...' : 'Creating Project...'
+                : isEditMode ? 'Save Changes' : 'Publish Project'}
             </button>
           </div>
         </form>

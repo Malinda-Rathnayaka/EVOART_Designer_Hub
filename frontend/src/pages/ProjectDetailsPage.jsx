@@ -157,7 +157,9 @@ export const ProjectDetailsPage = ({ project: initialProject, onBack, onNavigate
               {project.referenceFiles && project.referenceFiles.length > 0 ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   {project.referenceFiles.map((file, i) => {
-                    const downloadUrl = api.getFileUrl('references', file.filename);
+                    const downloadUrl = file.url || api.getFileUrl('references', file.filename);
+                    const isImage = file.mimetype?.startsWith('image/') || /\.(jpg|jpeg|png|webp|svg|gif)$/i.test(file.originalName || file.filename);
+
                     return (
                       <div
                         key={i}
@@ -169,14 +171,33 @@ export const ProjectDetailsPage = ({ project: initialProject, onBack, onNavigate
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'space-between',
+                          gap: '1rem',
                         }}
                       >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                          <File size={18} color="var(--accent-cyan)" />
-                          <div>
-                            <div style={{ fontSize: '0.88rem', fontWeight: 600 }}>{file.originalName}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', overflow: 'hidden' }}>
+                          {isImage && (file.url || downloadUrl) ? (
+                            <img
+                              src={file.url || downloadUrl}
+                              alt={file.originalName}
+                              style={{
+                                width: '40px',
+                                height: '40px',
+                                objectFit: 'cover',
+                                borderRadius: '6px',
+                                border: '1px solid var(--border-light)',
+                                background: '#111',
+                              }}
+                              onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                            />
+                          ) : (
+                            <File size={18} color="var(--accent-cyan)" />
+                          )}
+                          <div style={{ overflow: 'hidden' }}>
+                            <div style={{ fontSize: '0.88rem', fontWeight: 600, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                              {file.originalName}
+                            </div>
                             <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>
-                              {(file.size / (1024 * 1024)).toFixed(2)} MB • Reference Spec
+                              {(file.size / (1024 * 1024)).toFixed(2)} MB • {file.storageType === 'cloudinary' || file.url?.includes('cloudinary') ? 'Cloudinary Hosted' : 'Reference Spec'}
                             </div>
                           </div>
                         </div>
@@ -186,6 +207,7 @@ export const ProjectDetailsPage = ({ project: initialProject, onBack, onNavigate
                           target="_blank"
                           rel="noreferrer"
                           className="btn btn-secondary btn-sm"
+                          style={{ flexShrink: 0 }}
                         >
                           <Download size={13} />
                           Download

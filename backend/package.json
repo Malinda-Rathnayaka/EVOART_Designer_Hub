@@ -9,11 +9,18 @@
     "seed": "node utils/seed.js",
     "test": "node tests/workflow.test.js"
   },
-  "keywords": ["mern", "express", "mongodb", "mongoose", "designer-bidding"],
+  "keywords": [
+    "mern",
+    "express",
+    "mongodb",
+    "mongoose",
+    "designer-bidding"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "bcryptjs": "^2.4.3",
+    "cloudinary": "^2.11.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",

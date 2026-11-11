@@ -21,6 +21,22 @@ const getFile = async (req, res, next) => {
     const safeFilename = path.basename(filename);
     const filePath = path.join(__dirname, '..', 'uploads', type, safeFilename);
 
+    // If reference file is hosted on Cloudinary, redirect directly to Cloudinary CDN
+    if (type === 'references') {
+      const projectWithFile = await Project.findOne({
+        'referenceFiles.filename': safeFilename,
+      });
+
+      if (projectWithFile) {
+        const refFile = projectWithFile.referenceFiles.find(
+          (f) => f.filename === safeFilename
+        );
+        if (refFile && refFile.url) {
+          return res.redirect(refFile.url);
+        }
+      }
+    }
+
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({
         success: false,

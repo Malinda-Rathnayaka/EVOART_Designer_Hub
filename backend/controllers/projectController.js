@@ -1,6 +1,7 @@
 const Project = require('../models/Project');
 const Bid = require('../models/Bid');
 const Assignment = require('../models/Assignment');
+const { uploadReferenceFile, deleteCloudinaryFile } = require('../services/cloudinaryService');
 
 // @desc    Create a new project with reference files
 // @route   POST /api/projects
@@ -23,14 +24,14 @@ const createProject = async (req, res, next) => {
       });
     }
 
-    // Process reference files if uploaded
-    const referenceFiles = (req.files || []).map((file) => ({
-      filename: file.filename,
-      originalName: file.originalname,
-      path: file.path,
-      mimetype: file.mimetype,
-      size: file.size,
-    }));
+    // Logical Area: Process reference images and briefs (Cloudinary with local fallback)
+    const referenceFiles = [];
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        const fileData = await uploadReferenceFile(file);
+        referenceFiles.push(fileData);
+      }
+    }
 
     const project = await Project.create({
       title: title.trim(),
@@ -256,16 +257,12 @@ const updateProject = async (req, res, next) => {
     }
     if (deadline) project.deadline = new Date(deadline);
 
-    // If additional files were uploaded
+    // If additional files were uploaded, process via Cloudinary
     if (req.files && req.files.length > 0) {
-      const newFiles = req.files.map((file) => ({
-        filename: file.filename,
-        originalName: file.originalname,
-        path: file.path,
-        mimetype: file.mimetype,
-        size: file.size,
-      }));
-      project.referenceFiles.push(...newFiles);
+      for (const file of req.files) {
+        const fileData = await uploadReferenceFile(file);
+        project.referenceFiles.push(fileData);
+      }
     }
 
     await project.save();
@@ -298,6 +295,15 @@ const deleteProject = async (req, res, next) => {
         success: false,
         message: 'Cannot delete a project that has an active assignment awarded. Please cancel the assignment first.',
       });
+    }
+
+    // Clean up reference assets from Cloudinary if stored remotely
+    if (project.referenceFiles && project.referenceFiles.length > 0) {
+      for (const file of project.referenceFiles) {
+        if (file.publicId) {
+          await deleteCloudinaryFile(file.publicId).catch(() => {});
+        }
+      }
     }
 
     await Project.deleteOne({ _id: project._id });

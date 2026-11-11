@@ -27,6 +27,8 @@ export const AdminDashboard = ({ onViewDetails }) => {
   // Modals state
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [awardProjectTarget, setAwardProjectTarget] = useState(null);
+  // Edit modal: holds the project being edited (null = closed)
+  const [editProjectTarget, setEditProjectTarget] = useState(null);
 
   const fetchDashboardData = async () => {
     try {
@@ -240,6 +242,7 @@ export const AdminDashboard = ({ onViewDetails }) => {
               onOpenAwardModal={(proj) => setAwardProjectTarget(proj)}
               onToggleBidding={handleToggleBidding}
               onViewDetails={onViewDetails}
+              onEditProject={(proj) => setEditProjectTarget(proj)}
             />
           ))}
         </div>
@@ -250,6 +253,15 @@ export const AdminDashboard = ({ onViewDetails }) => {
         <ProjectModal
           onClose={() => setShowProjectModal(false)}
           onSuccess={fetchDashboardData}
+        />
+      )}
+
+      {/* Edit Project Modal — admin-only; pre-populated with existing project data */}
+      {editProjectTarget && (
+        <ProjectModal
+          project={editProjectTarget}
+          onClose={() => setEditProjectTarget(null)}
+          onSuccess={() => { setEditProjectTarget(null); fetchDashboardData(); }}
         />
       )}
 

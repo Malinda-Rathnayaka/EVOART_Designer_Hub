@@ -5,6 +5,13 @@ const fileSchema = new mongoose.Schema(
     filename: { type: String, required: true },
     originalName: { type: String, required: true },
     path: { type: String, required: true },
+    url: { type: String, default: '' },
+    publicId: { type: String, default: null },
+    storageType: {
+      type: String,
+      enum: ['cloudinary', 'local'],
+      default: 'local',
+    },
     mimetype: { type: String, required: true },
     size: { type: Number, required: true },
     uploadedAt: { type: Date, default: Date.now },

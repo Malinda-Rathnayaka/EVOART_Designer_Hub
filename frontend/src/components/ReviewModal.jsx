@@ -10,6 +10,7 @@ import {
   AlertCircle,
   MessageSquare,
   ShieldAlert,
+  ExternalLink,
 } from 'lucide-react';
 
 export const ReviewModal = ({ submission, assignment, onClose, onSuccess }) => {
@@ -131,18 +132,48 @@ export const ReviewModal = ({ submission, assignment, onClose, onSuccess }) => {
                         <span style={{ fontSize: '0.88rem', fontWeight: 500 }}>
                           {file.originalName}
                         </span>
+                        {file.storageType === 'google_drive' && (
+                          <span
+                            style={{
+                              fontSize: '0.68rem',
+                              padding: '0.1rem 0.45rem',
+                              borderRadius: '4px',
+                              background: 'rgba(34, 211, 238, 0.12)',
+                              color: 'var(--accent-cyan)',
+                              border: '1px solid rgba(34, 211, 238, 0.3)',
+                              fontWeight: 600,
+                            }}
+                          >
+                            Google Drive
+                          </span>
+                        )}
                       </div>
-                      <a
-                        href={fileUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="btn btn-secondary btn-sm"
-                        style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem' }}
-                        title="Download / Preview file"
-                      >
-                        <Download size={13} />
-                        Download
-                      </a>
+                      <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                        {file.url && (
+                          <a
+                            href={file.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="btn btn-secondary btn-sm"
+                            style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', gap: '0.3rem' }}
+                            title="Open in Google Drive"
+                          >
+                            <ExternalLink size={12} color="var(--accent-cyan)" />
+                            Google Drive
+                          </a>
+                        )}
+                        <a
+                          href={fileUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="btn btn-secondary btn-sm"
+                          style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem' }}
+                          title="Download / Preview file"
+                        >
+                          <Download size={13} />
+                          Download
+                        </a>
+                      </div>
                     </div>
                   );
                 })}

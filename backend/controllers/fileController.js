@@ -37,6 +37,34 @@ const getFile = async (req, res, next) => {
       }
     }
 
+    // If submission file is hosted on Google Drive or external cloud, check access and redirect
+    if (type === 'submissions') {
+      const submissionWithFile = await Submission.findOne({
+        'files.filename': safeFilename,
+      });
+
+      if (submissionWithFile) {
+        // Access control for private submissions:
+        // Only Admin OR the designer who submitted the work can access
+        if (
+          req.user.role !== 'admin' &&
+          submissionWithFile.designer.toString() !== req.user._id.toString()
+        ) {
+          return res.status(403).json({
+            success: false,
+            message: 'Access denied: You do not have permission to view this submission file.',
+          });
+        }
+
+        const subFile = submissionWithFile.files.find(
+          (f) => f.filename === safeFilename
+        );
+        if (subFile && subFile.url) {
+          return res.redirect(subFile.url);
+        }
+      }
+    }
+
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({
         success: false,

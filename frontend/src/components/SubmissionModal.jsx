@@ -175,12 +175,12 @@ export const SubmissionModal = ({ assignment, onClose, onSuccess }) => {
               />
             </div>
 
-            {/* Quota Rule Reminder Banner */}
+            {/* Quota Rule Reminder & Cloud Storage Banner */}
             <div
               style={{
                 display: 'flex',
-                alignItems: 'flex-start',
-                gap: '0.6rem',
+                flexDirection: 'column',
+                gap: '0.5rem',
                 fontSize: '0.8rem',
                 color: 'var(--text-muted)',
                 background: 'rgba(99, 102, 241, 0.08)',
@@ -189,10 +189,26 @@ export const SubmissionModal = ({ assignment, onClose, onSuccess }) => {
                 borderRadius: 'var(--radius-md)',
               }}
             >
-              <Info size={16} color="#818cf8" style={{ flexShrink: 0, marginTop: 2 }} />
-              <div>
-                <strong>Workflow Note:</strong> Submitting files moves this assignment to <em>Under Review</em>.
-                Your active assignment slot is <strong>not</strong> released until the administrator gives final approval.
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
+                <Info size={16} color="#818cf8" style={{ flexShrink: 0, marginTop: 2 }} />
+                <div>
+                  <strong>Workflow Note:</strong> Submitting files moves this assignment to <em>Under Review</em>.
+                  Your active assignment slot is <strong>not</strong> released until the administrator gives final approval.
+                </div>
+              </div>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.45rem',
+                  fontSize: '0.75rem',
+                  color: 'var(--accent-cyan)',
+                  paddingTop: '0.4rem',
+                  borderTop: '1px solid rgba(255, 255, 255, 0.06)',
+                }}
+              >
+                <UploadCloud size={14} />
+                <span>Google Drive Storage: Uploaded deliverables sync directly to the configured Google Drive cloud.</span>
               </div>
             </div>
           </div>

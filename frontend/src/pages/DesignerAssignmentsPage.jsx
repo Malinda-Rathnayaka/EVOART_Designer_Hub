@@ -15,6 +15,7 @@ import {
   AlertTriangle,
   MessageSquare,
   RefreshCw,
+  ExternalLink,
 } from 'lucide-react';
 
 export const DesignerAssignmentsPage = ({ onViewDetails }) => {
@@ -230,18 +231,22 @@ export const DesignerAssignmentsPage = ({ onViewDetails }) => {
                             </span>
                           </div>
 
-                          <div style={{ display: 'flex', gap: '0.4rem' }}>
+                          <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
                             {sub.files?.map((f, i) => (
                               <a
                                 key={i}
-                                href={api.getFileUrl('submissions', f.filename)}
+                                href={f.url || api.getFileUrl('submissions', f.filename)}
                                 target="_blank"
                                 rel="noreferrer"
                                 className="btn btn-secondary btn-sm"
-                                style={{ padding: '0.25rem 0.55rem', fontSize: '0.72rem' }}
+                                style={{ padding: '0.25rem 0.55rem', fontSize: '0.72rem', gap: '0.35rem' }}
                                 title={f.originalName}
                               >
-                                <Download size={12} />
+                                {f.storageType === 'google_drive' ? (
+                                  <ExternalLink size={12} color="var(--accent-cyan)" />
+                                ) : (
+                                  <Download size={12} />
+                                )}
                                 {f.originalName}
                               </a>
                             ))}

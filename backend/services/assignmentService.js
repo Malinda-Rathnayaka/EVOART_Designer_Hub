@@ -4,6 +4,10 @@ const Project = require('../models/Project');
 const Bid = require('../models/Bid');
 const Submission = require('../models/Submission');
 const User = require('../models/User');
+const {
+  uploadDeliverableFile,
+  getGoogleDriveConfig,
+} = require('./googleDriveService');
 
 const MAX_ACTIVE_ASSIGNMENTS = 3;
 const ACTIVE_STATUSES = ['in_progress', 'under_review', 'revision_requested'];
@@ -162,13 +166,14 @@ const submitDesignWork = async ({
   });
   const version = existingSubmissionsCount + 1;
 
-  const fileData = files.map((f) => ({
-    filename: f.filename,
-    originalName: f.originalname,
-    path: f.path,
-    mimetype: f.mimetype,
-    size: f.size,
-  }));
+  // Logical Area: Upload deliverable files to Google Drive (if link configured in .env)
+  const fileData = [];
+  for (const file of files) {
+    const uploadedFile = await uploadDeliverableFile(file);
+    fileData.push(uploadedFile);
+  }
+
+  const driveConfig = getGoogleDriveConfig();
 
   const submission = new Submission({
     assignment: assignment._id,
@@ -177,6 +182,7 @@ const submitDesignWork = async ({
     version,
     files: fileData,
     comments,
+    driveFolderUrl: driveConfig.folderLink || '',
     status: 'submitted',
   });
   await submission.save();

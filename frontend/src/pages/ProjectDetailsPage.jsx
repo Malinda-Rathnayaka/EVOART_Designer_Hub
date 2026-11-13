@@ -17,6 +17,9 @@ import {
   Clock,
   Sparkles,
   AlertCircle,
+  Award,
+  User,
+  Tag,
 } from 'lucide-react';
 
 export const ProjectDetailsPage = ({ project: initialProject, onBack, onNavigateToAssignments }) => {
@@ -227,63 +230,238 @@ export const ProjectDetailsPage = ({ project: initialProject, onBack, onNavigate
           {/* Admin View: All Submitted Bids Table */}
           {isAdmin && (
             <div className="glass-card" style={{ padding: '2rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
-                <h3 style={{ fontSize: '1.2rem' }}>All Submitted Bids ({bids.length})</h3>
-                <span style={{ fontSize: '0.78rem', color: 'var(--text-dim)' }}>
-                  All bids verified strictly lower than ${project.initialPrice}
-                </span>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: '1.5rem',
+                  flexWrap: 'wrap',
+                  gap: '0.75rem',
+                }}
+              >
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                    <h3 style={{ fontSize: '1.25rem', margin: 0 }}>All Bidding Designers</h3>
+                    <span
+                      style={{
+                        padding: '0.2rem 0.65rem',
+                        borderRadius: '999px',
+                        background: 'rgba(99, 102, 241, 0.15)',
+                        border: '1px solid rgba(99, 102, 241, 0.3)',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        color: 'var(--accent-primary)',
+                      }}
+                    >
+                      {bids.length} {bids.length === 1 ? 'Candidate' : 'Candidates'}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginTop: '0.25rem' }}>
+                    All private proposals submitted below the ${project.initialPrice?.toLocaleString()} budget limit
+                  </div>
+                </div>
+
+                <button
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => setShowAwardModal(true)}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                >
+                  <Gavel size={14} />
+                  {isAssigned ? 'Open Full Comparison' : 'Award Comparison Modal'}
+                </button>
               </div>
 
               {bids.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
-                  No bids have been submitted yet for this project.
+                <div style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-muted)' }}>
+                  <User size={36} color="var(--text-dim)" style={{ margin: '0 auto 0.75rem', opacity: 0.5 }} />
+                  <p style={{ margin: 0, fontWeight: 500 }}>No designers have placed bids on this project yet.</p>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-dim)', marginTop: '0.3rem' }}>
+                    Once bidding is open, eligible designers will submit private offers here.
+                  </p>
                 </div>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   {bids.map((bid) => {
-                    const isWinning = project.winningBid && (project.winningBid._id === bid._id || project.winningBid === bid._id);
+                    const isWinning =
+                      project.winningBid &&
+                      (project.winningBid._id === bid._id || project.winningBid === bid._id);
+                    const savings = (project.initialPrice || 0) - bid.amount;
+                    const savingsPct =
+                      project.initialPrice > 0 ? Math.round((savings / project.initialPrice) * 100) : 0;
+                    const initials = (bid.designer?.name || 'D')
+                      .split(' ')
+                      .map((n) => n[0])
+                      .join('')
+                      .slice(0, 2)
+                      .toUpperCase();
 
                     return (
                       <div
                         key={bid._id}
                         style={{
-                          padding: '1rem',
-                          borderRadius: '8px',
-                          background: isWinning ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255, 255, 255, 0.02)',
-                          border: isWinning ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid var(--border-light)',
+                          padding: '1.25rem',
+                          borderRadius: '12px',
+                          background: isWinning
+                            ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(16, 185, 129, 0.02) 100%)'
+                            : 'rgba(255, 255, 255, 0.02)',
+                          border: isWinning
+                            ? '1.5px solid rgba(16, 185, 129, 0.4)'
+                            : '1px solid var(--border-subtle)',
                           display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          flexWrap: 'wrap',
-                          gap: '1rem',
+                          flexDirection: 'column',
+                          gap: '0.85rem',
+                          transition: 'all 0.2s ease',
                         }}
                       >
-                        <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                            <strong style={{ fontSize: '0.95rem' }}>{bid.designer?.name}</strong>
-                            {isWinning && (
-                              <span className="badge badge-approved" style={{ fontSize: '0.68rem' }}>
-                                Winning Bid
-                              </span>
-                            )}
+                        {/* Top row: Profile and Price */}
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            justifyContent: 'space-between',
+                            flexWrap: 'wrap',
+                            gap: '1rem',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                            <div
+                              style={{
+                                width: '42px',
+                                height: '42px',
+                                borderRadius: '50%',
+                                background: isWinning
+                                  ? 'linear-gradient(135deg, #10b981, #059669)'
+                                  : 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontWeight: 800,
+                                fontSize: '0.95rem',
+                                color: '#ffffff',
+                                boxShadow: isWinning
+                                  ? '0 0 12px rgba(16, 185, 129, 0.3)'
+                                  : '0 0 12px rgba(99, 102, 241, 0.25)',
+                                flexShrink: 0,
+                              }}
+                            >
+                              {initials}
+                            </div>
+
+                            <div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <strong style={{ fontSize: '1.02rem', color: 'var(--text-main)' }}>
+                                  {bid.designer?.name || 'Designer'}
+                                </strong>
+                                {isWinning && (
+                                  <span
+                                    style={{
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '0.25rem',
+                                      padding: '0.15rem 0.55rem',
+                                      borderRadius: '999px',
+                                      background: 'rgba(16, 185, 129, 0.15)',
+                                      border: '1px solid rgba(16, 185, 129, 0.3)',
+                                      fontSize: '0.72rem',
+                                      fontWeight: 700,
+                                      color: 'var(--accent-emerald)',
+                                    }}
+                                  >
+                                    <CheckCircle2 size={12} /> Awarded Winner
+                                  </span>
+                                )}
+                              </div>
+                              <div style={{ fontSize: '0.8rem', color: 'var(--text-dim)', marginTop: '0.15rem' }}>
+                                {bid.designer?.email || 'Registered Designer'}
+                              </div>
+                            </div>
                           </div>
-                          <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)' }}>
-                            {bid.designer?.email} • Est. {bid.deliveryDays} Days
+
+                          <div style={{ textAlign: 'right' }}>
+                            <div
+                              style={{
+                                fontSize: '1.35rem',
+                                fontWeight: 800,
+                                color: isWinning ? 'var(--accent-emerald)' : 'var(--text-main)',
+                              }}
+                            >
+                              ${bid.amount}
+                            </div>
+                            <div style={{ fontSize: '0.74rem', color: 'var(--accent-emerald)', fontWeight: 600 }}>
+                              Save ${savings} (-{savingsPct}%)
+                            </div>
                           </div>
-                          {bid.proposalText && (
-                            <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '0.35rem' }}>
-                              "{bid.proposalText}"
-                            </p>
-                          )}
                         </div>
 
-                        <div style={{ textAlign: 'right' }}>
-                          <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--accent-emerald)' }}>
-                            ${bid.amount}
+                        {/* Proposal & Badges */}
+                        {bid.proposalText && (
+                          <div
+                            style={{
+                              padding: '0.65rem 0.85rem',
+                              borderRadius: '8px',
+                              background: 'rgba(0, 0, 0, 0.25)',
+                              borderLeft: '3px solid var(--accent-primary)',
+                              fontSize: '0.83rem',
+                              color: 'var(--text-muted)',
+                              fontStyle: 'italic',
+                              lineHeight: 1.45,
+                            }}
+                          >
+                            "{bid.proposalText}"
                           </div>
-                          <div style={{ fontSize: '0.72rem', color: 'var(--text-dim)' }}>
-                            Status: {bid.status}
+                        )}
+
+                        {/* Bottom Meta & Skills */}
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            flexWrap: 'wrap',
+                            gap: '0.6rem',
+                            paddingTop: '0.4rem',
+                            borderTop: '1px solid rgba(255, 255, 255, 0.04)',
+                            fontSize: '0.78rem',
+                            color: 'var(--text-dim)',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flexWrap: 'wrap' }}>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                              <Clock size={13} color="var(--accent-cyan)" />
+                              Est. {bid.deliveryDays} Days Turnaround
+                            </span>
+
+                            {bid.designer?.skills && bid.designer.skills.length > 0 && (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', flexWrap: 'wrap' }}>
+                                <Tag size={12} color="var(--text-dim)" />
+                                {bid.designer.skills.slice(0, 3).map((skill, idx) => (
+                                  <span
+                                    key={idx}
+                                    style={{
+                                      padding: '0.1rem 0.45rem',
+                                      borderRadius: '4px',
+                                      background: 'rgba(255, 255, 255, 0.05)',
+                                      fontSize: '0.7rem',
+                                      color: 'var(--text-muted)',
+                                    }}
+                                  >
+                                    {skill}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
                           </div>
+
+                          {!isAssigned && (
+                            <button
+                              className="btn btn-primary btn-sm"
+                              onClick={() => setShowAwardModal(true)}
+                              style={{ padding: '0.3rem 0.75rem', fontSize: '0.76rem' }}
+                            >
+                              <Award size={13} /> Select Candidate
+                            </button>
+                          )}
                         </div>
                       </div>
                     );
@@ -425,16 +603,14 @@ export const ProjectDetailsPage = ({ project: initialProject, onBack, onNavigate
                   {isBiddingOpen ? 'Close Bidding Window' : 'Open Bidding Window'}
                 </button>
 
-                {!isAssigned && (
-                  <button
-                    className="btn btn-primary"
-                    style={{ width: '100%' }}
-                    onClick={() => setShowAwardModal(true)}
-                  >
-                    <Gavel size={15} />
-                    Review Bids & Award
-                  </button>
-                )}
+                <button
+                  className={`btn ${isAssigned ? 'btn-secondary' : 'btn-primary'}`}
+                  style={{ width: '100%' }}
+                  onClick={() => setShowAwardModal(true)}
+                >
+                  <Gavel size={15} />
+                  {isAssigned ? `Inspect All Bids (${bids.length})` : `Review Bids & Award (${bids.length})`}
+                </button>
               </div>
             )}
           </div>

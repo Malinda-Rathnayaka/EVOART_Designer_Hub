@@ -11,6 +11,7 @@ import {
   Paperclip,
   Pencil,
   Image as ImageIcon,
+  Users,
 } from 'lucide-react';
 
 export const ProjectCard = ({
@@ -334,6 +335,67 @@ export const ProjectCard = ({
           </div>
         )}
 
+        {/* Admin Designer Bidding Status Banner */}
+        {isAdmin && (
+          <div
+            onClick={() => onOpenAwardModal(project)}
+            style={{
+              padding: '0.65rem 0.85rem',
+              borderRadius: '8px',
+              background: (project.bidCount || 0) > 0 ? 'rgba(99, 102, 241, 0.08)' : 'rgba(255, 255, 255, 0.03)',
+              border: (project.bidCount || 0) > 0 ? '1px solid rgba(99, 102, 241, 0.25)' : '1px solid var(--border-subtle)',
+              marginBottom: '1rem',
+              fontSize: '0.82rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+            }}
+            title="Click to inspect all bidding designers"
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = 'var(--accent-primary)';
+              e.currentTarget.style.background = 'rgba(99, 102, 241, 0.15)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = (project.bidCount || 0) > 0 ? 'rgba(99, 102, 241, 0.25)' : 'var(--border-subtle)';
+              e.currentTarget.style.background = (project.bidCount || 0) > 0 ? 'rgba(99, 102, 241, 0.08)' : 'rgba(255, 255, 255, 0.03)';
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <div
+                style={{
+                  width: '24px',
+                  height: '24px',
+                  borderRadius: '6px',
+                  background: (project.bidCount || 0) > 0 ? 'rgba(99, 102, 241, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Users size={13} color={(project.bidCount || 0) > 0 ? '#818cf8' : 'var(--text-dim)'} />
+              </div>
+              <span style={{ color: (project.bidCount || 0) > 0 ? 'var(--text-main)' : 'var(--text-dim)', fontWeight: 600 }}>
+                {project.bidCount !== undefined && project.bidCount > 0
+                  ? `${project.bidCount} ${project.bidCount === 1 ? 'Designer Bidding' : 'Designers Bidding'}`
+                  : '0 Bids Submitted'}
+              </span>
+            </div>
+            {project.assignedDesigner ? (
+              <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--accent-emerald)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                <CheckCircle2 size={12} /> Awarded: {project.assignedDesigner?.name || 'Assigned'}
+              </span>
+            ) : (project.bidCount || 0) > 0 ? (
+              <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--accent-cyan)' }}>
+                View All Bids →
+              </span>
+            ) : (
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-dim)' }}>Awaiting Bids</span>
+            )}
+          </div>
+        )}
+
         {/* Actions Bar */}
         <div style={{ display: 'flex', gap: '0.5rem', marginTop: 'auto' }}>
           {isAdmin ? (
@@ -368,13 +430,12 @@ export const ProjectCard = ({
               </button>
 
               <button
-                className="btn btn-primary btn-sm"
+                className={`btn btn-sm ${isAssigned ? 'btn-secondary' : 'btn-primary'}`}
                 onClick={() => onOpenAwardModal(project)}
-                title="Review all submitted bids & award assignment"
-                disabled={isAssigned}
+                title={isAssigned ? "View all bidding designers and awarded winner" : "Review all submitted bids & award assignment"}
               >
                 <Gavel size={14} />
-                Bids {project.bidCount !== undefined ? `(${project.bidCount})` : ''}
+                {isAssigned ? `Bids (${project.bidCount || 0})` : `Bids ${project.bidCount !== undefined ? `(${project.bidCount})` : ''}`}
               </button>
             </>
           ) : (

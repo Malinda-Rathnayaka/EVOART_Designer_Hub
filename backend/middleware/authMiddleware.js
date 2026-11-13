@@ -26,11 +26,17 @@ const protect = async (req, res, next) => {
   }
 
   try {
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      console.error('[CRITICAL SECURITY ERROR] JWT_SECRET is not configured in .env file.');
+      return res.status(500).json({
+        success: false,
+        message: 'Server security error: JWT_SECRET is missing in .env file. Please configure your .env file.',
+      });
+    }
+
     // Logical Area 1c: Verify JWT signature and expiration
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET || 'designer_platform_super_secret_jwt_key_2026'
-    );
+    const decoded = jwt.verify(token, jwtSecret);
 
     // Logical Area 1d: Fetch user document from database ('designers' or 'users' collection)
     let user = await Designer.findById(decoded.id).select('-password');

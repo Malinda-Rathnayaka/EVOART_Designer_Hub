@@ -51,9 +51,46 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
+// Logical Area 5b: Validate essential environment configuration (Zero hardcoding)
+const validateEnvironment = () => {
+  const missing = [];
+
+  if (!process.env.JWT_SECRET || process.env.JWT_SECRET.trim() === '') {
+    missing.push({
+      key: 'JWT_SECRET',
+      description: 'Cryptographic secret key for signing and verifying JWT tokens',
+    });
+  }
+
+  if (process.env.NODE_ENV !== 'test' && (!process.env.MONGO_URI || process.env.MONGO_URI.trim() === '')) {
+    missing.push({
+      key: 'MONGO_URI',
+      description: 'MongoDB Atlas connection string',
+    });
+  }
+
+  if (missing.length > 0) {
+    console.error('\n' + '='.repeat(70));
+    console.error(' [CRITICAL ERROR] Missing Required .env Configuration');
+    console.error('='.repeat(70));
+    console.error(' The server cannot start because required .env variables are missing:\n');
+    missing.forEach(({ key, description }) => {
+      console.error(`   ✗ ${key}: ${description}`);
+    });
+    console.error('\n Please configure your .env file with these variables and restart.');
+    console.error('='.repeat(70) + '\n');
+    throw new Error(
+      `Missing required .env variables: ${missing.map((m) => m.key).join(', ')}`
+    );
+  }
+};
+
 // Logical Area 6: Database initialization and server bootstrap
 const startServer = async () => {
   try {
+    // Validate required .env variables — fail fast if missing
+    validateEnvironment();
+
     // Connect to MongoDB
     await connectDB();
 

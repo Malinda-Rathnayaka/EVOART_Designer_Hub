@@ -15,7 +15,9 @@ const {
   getDesignerActiveCount,
 } = require('../services/assignmentService');
 
+const path = require('path');
 dotenv.config();
+dotenv.config({ path: path.join(__dirname, '../.env') });
 process.env.NODE_ENV = 'test';
 
 async function runTests() {

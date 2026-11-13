@@ -5,8 +5,10 @@ const dotenv = require('dotenv');
 const { connectDB } = require('./config/db');
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 
-// Logical Area 1: Load environment variables
+// Logical Area 1: Load environment variables (supports root and backend directory execution)
 dotenv.config();
+dotenv.config({ path: path.join(__dirname, '.env') });
+dotenv.config({ path: path.join(__dirname, '../.env') });
 
 const app = express();
 

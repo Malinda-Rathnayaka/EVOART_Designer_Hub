@@ -1,5 +1,11 @@
 const fs = require('fs');
 const path = require('path');
+const dotenv = require('dotenv');
+
+// Ensure environment variables from backend/.env are loaded regardless of execution context
+dotenv.config();
+dotenv.config({ path: path.join(__dirname, '../.env') });
+dotenv.config({ path: path.join(__dirname, '../../.env') });
 
 /**
  * ==============================================================================
@@ -79,20 +85,34 @@ const uploadDeliverableFile = async (file) => {
       const fileBuffer = fs.readFileSync(file.path);
       const base64Data = fileBuffer.toString('base64');
 
+      // Extract raw folder ID from folderLink if available
+      const folderIdMatch = folderLink
+        ? folderLink.match(/folders\/([-\w]{25,})/) || folderLink.match(/[-\w]{25,}/)
+        : null;
+      const folderId = folderIdMatch ? folderIdMatch[1] || folderIdMatch[0] : '';
+
       const payload = {
         filename: file.originalname,
         mimetype: file.mimetype,
         fileData: base64Data,
         folderLink: folderLink || '',
+        folderId: folderId || '',
       };
 
       const response = await fetch(uploadUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
+        redirect: 'follow',
       });
 
-      const result = await response.json();
+      const responseText = await response.text();
+      let result;
+      try {
+        result = JSON.parse(responseText);
+      } catch {
+        result = { url: responseText };
+      }
 
       if (result && (result.url || result.fileUrl || result.link || result.success)) {
         const driveUrl = result.url || result.fileUrl || result.link || folderLink;

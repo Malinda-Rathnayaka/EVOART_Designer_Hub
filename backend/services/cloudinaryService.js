@@ -1,8 +1,24 @@
 const cloudinary = require('cloudinary').v2;
 const fs = require('fs');
+const path = require('path');
+const dotenv = require('dotenv');
+
+// Ensure environment variables from backend/.env are loaded regardless of execution directory
+dotenv.config();
+dotenv.config({ path: path.join(__dirname, '../.env') });
+dotenv.config({ path: path.join(__dirname, '../../.env') });
 
 // Logical Area 1: Initialize Cloudinary configuration from environment variables
 const configureCloudinary = () => {
+  // Support full CLOUDINARY_URL environment variable if provided
+  if (process.env.CLOUDINARY_URL) {
+    cloudinary.config({
+      cloudinary_url: process.env.CLOUDINARY_URL.trim(),
+      secure: true,
+    });
+    return true;
+  }
+
   const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
   const apiKey = process.env.CLOUDINARY_API_KEY;
   const apiSecret = process.env.CLOUDINARY_API_SECRET;
@@ -21,6 +37,10 @@ const configureCloudinary = () => {
 
 // Logical Area 2: Check whether valid Cloudinary API keys are configured
 const isCloudinaryConfigured = () => {
+  if (process.env.CLOUDINARY_URL && !process.env.CLOUDINARY_URL.includes('your_')) {
+    return true;
+  }
+
   const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
   const apiKey = process.env.CLOUDINARY_API_KEY;
   const apiSecret = process.env.CLOUDINARY_API_SECRET;

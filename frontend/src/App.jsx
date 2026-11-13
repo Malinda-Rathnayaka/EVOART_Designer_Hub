@@ -18,16 +18,17 @@ function AppContent() {
   const [selectedProject, setSelectedProject] = useState(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
 
-  // Automatically adjust default active tab when logged-in user or role changes
+  // Automatically navigate to the role-specific dashboard when user logs in
   useEffect(() => {
     if (user) {
-      if (isAdmin && !['projects', 'designers', 'assignments', 'project-details'].includes(currentTab)) {
+      setSelectedProject(null);
+      if (user.role === 'admin') {
         setCurrentTab('projects');
-      } else if (isDesigner && !['explore', 'my-bids', 'my-assignments', 'project-details'].includes(currentTab)) {
+      } else if (user.role === 'designer') {
         setCurrentTab('explore');
       }
     }
-  }, [user, isAdmin, isDesigner]);
+  }, [user?._id, user?.role]);
 
   if (loading) {
     return (

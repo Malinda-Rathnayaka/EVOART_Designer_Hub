@@ -18,16 +18,26 @@ const login = async (req, res, next) => {
       });
     }
 
-    // Logical Area 2: Normalize email address for database query
-    const cleanEmail = email.toLowerCase().trim();
+    // Logical Area 2: Normalize identifier for database query (supports email or username/name)
+    const identifier = (email || '').trim();
+    const cleanEmail = identifier.toLowerCase();
+    const escapedIdentifier = identifier.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const nameRegex = new RegExp(`^${escapedIdentifier}$`, 'i');
+
+    const accountQuery = {
+      $or: [
+        { email: cleanEmail },
+        { name: nameRegex },
+      ],
+    };
 
     // Logical Area 3: Fetch credentials from MongoDB database
     // Step 3a: Look up designer in MongoDB 'designers' collection first
-    let user = await Designer.findOne({ email: cleanEmail }).select('+password');
+    let user = await Designer.findOne(accountQuery).select('+password');
 
     // Step 3b: If not in designers, look up administrator in MongoDB 'users' collection
     if (!user) {
-      user = await User.findOne({ email: cleanEmail }).select('+password');
+      user = await User.findOne(accountQuery).select('+password');
     }
 
     // Logical Area 4: Verify that the account exists in the database

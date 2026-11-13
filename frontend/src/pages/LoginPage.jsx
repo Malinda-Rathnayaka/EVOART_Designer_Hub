@@ -1,461 +1,395 @@
-import React, { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { Layers, Lock, Mail, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useAuth } from "../context/AuthContext";
+import { AlertCircle } from "lucide-react";
 
-export const LoginPage = () => {
+export function LoginPage() {
   const { login } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const canvasRef = useRef(null);
 
+  /* ------------------------- Particle ring canvas ------------------------- */
+  const initParticles = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    let rafId;
+    let particles = [];
+
+    const resize = () => {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const w = canvas.offsetWidth;
+      const h = canvas.offsetHeight;
+
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      const cx = w / 2;
+      const cy = h / 2;
+      const radius = Math.min(w, h) * 0.36;
+
+      particles = Array.from({ length: 220 }, (_, i) => ({
+        angle: (i / 220) * Math.PI * 2,
+        baseAngle: (i / 220) * Math.PI * 2,
+        radius: radius + (Math.random() - 0.5) * 50,
+        size: Math.random() * 1.6 + 0.4,
+        speed: (Math.random() - 0.5) * 0.0005,
+        opacity: Math.random() * 0.5 + 0.12,
+        phase: Math.random() * Math.PI * 2,
+        cx,
+        cy,
+      }));
+    };
+
+    const draw = () => {
+      const w = canvas.offsetWidth;
+      const h = canvas.offsetHeight;
+
+      ctx.clearRect(0, 0, w, h);
+
+      particles.forEach((p) => {
+        p.angle += p.speed;
+        const pulse = Math.sin(Date.now() * 0.0007 + p.phase) * 3;
+        const r = p.radius + pulse;
+        const x = p.cx + Math.cos(p.angle) * r;
+        const y = p.cy + Math.sin(p.angle) * r;
+
+        ctx.beginPath();
+        ctx.arc(x, y, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(175, 160, 255, ${p.opacity})`;
+        ctx.fill();
+      });
+
+      rafId = requestAnimationFrame(draw);
+    };
+
+    resize();
+    rafId = requestAnimationFrame(draw);
+
+    window.addEventListener("resize", resize);
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      window.removeEventListener("resize", resize);
+    };
+  }, []);
+
+  useEffect(() => {
+    return initParticles();
+  }, [initParticles]);
+
+  /* ----------------------------- Submit handler ---------------------------- */
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setSubmitting(true);
+    setError("");
+    setLoading(true);
+    const form = e.currentTarget;
+    const email = form.email.value.trim();
+    const password = form.password.value;
+
     try {
       await login(email, password);
     } catch (err) {
-      setError(err.message || 'Login failed. Please verify credentials.');
+      setError(err.message || "Invalid credentials. Please verify your email/username and password.");
     } finally {
-      setSubmitting(false);
+      setLoading(false);
     }
   };
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '2rem 1.5rem',
-        background:
-          'radial-gradient(ellipse 60% 50% at 15% 10%, rgba(124, 58, 237, 0.35) 0%, transparent 60%), radial-gradient(ellipse 50% 45% at 85% 90%, rgba(34, 211, 238, 0.22) 0%, transparent 60%), #05060a',
-      }}
-    >
-      {/* Split card: brand panel + form panel */}
-      <div
-        style={{
-          width: '100%',
-          maxWidth: '920px',
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
-          borderRadius: '28px',
-          overflow: 'hidden',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
-          background: 'rgba(13, 16, 27, 0.75)',
-          backdropFilter: 'blur(24px)',
-          WebkitBackdropFilter: 'blur(24px)',
-          boxShadow:
-            '0 30px 80px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(124, 58, 237, 0.08), 0 0 120px rgba(124, 58, 237, 0.12)',
-          animation: 'loginFade 0.6s ease both',
-        }}
-      >
-        {/* ---------- LEFT: Brand / visual panel ---------- */}
-        <div
-          className="login-brand-panel"
-          style={{
-            position: 'relative',
-            padding: '3rem 2.5rem',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            background:
-              'linear-gradient(160deg, rgba(124, 58, 237, 0.45) 0%, rgba(37, 24, 84, 0.55) 45%, rgba(9, 12, 20, 0.9) 100%)',
-            borderRight: '1px solid rgba(255, 255, 255, 0.06)',
-            overflow: 'hidden',
-          }}
-        >
-          {/* Decorative orbs */}
-          <div
-            aria-hidden
-            style={{
-              position: 'absolute',
-              width: '260px',
-              height: '260px',
-              borderRadius: '50%',
-              top: '-90px',
-              left: '-90px',
-              background:
-                'radial-gradient(circle, rgba(167, 139, 250, 0.55) 0%, transparent 70%)',
-              filter: 'blur(10px)',
-              pointerEvents: 'none',
-            }}
-          />
-          <div
-            aria-hidden
-            style={{
-              position: 'absolute',
-              width: '320px',
-              height: '320px',
-              borderRadius: '50%',
-              bottom: '-140px',
-              right: '-120px',
-              background:
-                'radial-gradient(circle, rgba(34, 211, 238, 0.35) 0%, transparent 70%)',
-              filter: 'blur(14px)',
-              pointerEvents: 'none',
-            }}
-          />
-          {/* Subtle grid overlay */}
-          <div
-            aria-hidden
-            style={{
-              position: 'absolute',
-              inset: 0,
-              backgroundImage:
-                'linear-gradient(rgba(255,255,255,0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.045) 1px, transparent 1px)',
-              backgroundSize: '44px 44px',
-              maskImage:
-                'radial-gradient(ellipse at 30% 30%, #000 30%, transparent 75%)',
-              WebkitMaskImage:
-                'radial-gradient(ellipse at 30% 30%, #000 30%, transparent 75%)',
-              pointerEvents: 'none',
-            }}
-          />
-
-          {/* Brand mark */}
-          <div style={{ position: 'relative', zIndex: 1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <div
-                style={{
-                  width: '46px',
-                  height: '46px',
-                  borderRadius: '14px',
-                  background:
-                    'linear-gradient(135deg, #a78bfa 0%, #6366f1 55%, #22d3ee 100%)',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow:
-                    '0 10px 28px rgba(124, 58, 237, 0.55), inset 0 1px 0 rgba(255,255,255,0.35)',
-                }}
-              >
-                <Layers size={22} color="#ffffff" />
-              </div>
-              <div>
-                <div
-                  style={{
-                    fontSize: '1.05rem',
-                    fontWeight: 800,
-                    letterSpacing: '0.14em',
-                    color: '#ffffff',
-                  }}
-                >
-                  EVO <span style={{ color: '#22d3ee' }}>ART</span>
-                </div>
-                <div
-                  style={{
-                    fontSize: '0.7rem',
-                    letterSpacing: '0.28em',
-                    textTransform: 'uppercase',
-                    color: 'rgba(226, 232, 240, 0.55)',
-                  }}
-                >
-                  Designer Platform
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Headline */}
-          <div style={{ position: 'relative', zIndex: 1, margin: '2.5rem 0' }}>
-            <h2
-              style={{
-                fontSize: '2.1rem',
-                lineHeight: 1.18,
-                fontWeight: 800,
-                color: '#ffffff',
-                letterSpacing: '-0.02em',
-                marginBottom: '0.9rem',
-              }}
-            >
-              Craft your
-              <br />
-              <span
-                style={{
-                  background:
-                    'linear-gradient(90deg, #c4b5fd 0%, #22d3ee 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                }}
-              >
-                visual universe.
-              </span>
-            </h2>
-            <p
-              style={{
-                fontSize: '0.9rem',
-                lineHeight: 1.65,
-                color: 'rgba(203, 213, 225, 0.72)',
-                maxWidth: '300px',
-              }}
-            >
-              A workspace built for designers — assets, boards and collaboration
-              in one calm, dark canvas.
-            </p>
-          </div>
-
-          {/* Footer micro-copy */}
-          <div
-            style={{
-              position: 'relative',
-              zIndex: 1,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              fontSize: '0.72rem',
-              letterSpacing: '0.12em',
-              textTransform: 'uppercase',
-              color: 'rgba(148, 163, 184, 0.55)',
-            }}
-          >
-            <span
-              style={{
-                width: '6px',
-                height: '6px',
-                borderRadius: '50%',
-                background: '#22d3ee',
-                boxShadow: '0 0 10px #22d3ee',
-              }}
-            />
-            Secure workspace access
-          </div>
-        </div>
-
-        {/* ---------- RIGHT: Form panel ---------- */}
-        <div
-          style={{
-            padding: '3rem 2.75rem',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-          }}
-        >
-          <div style={{ marginBottom: '2rem' }}>
-            <h1
-              style={{
-                fontSize: '1.6rem',
-                fontWeight: 800,
-                color: '#f8fafc',
-                letterSpacing: '-0.02em',
-                marginBottom: '0.4rem',
-              }}
-            >
-              Welcome back
-            </h1>
-            <p style={{ fontSize: '0.86rem', color: 'rgba(148, 163, 184, 0.85)' }}>
-              Sign in to continue to your workspace.
-            </p>
-          </div>
-
-          {error && (
-            <div
-              style={{
-                padding: '0.75rem 1rem',
-                borderRadius: '14px',
-                background: 'rgba(244, 63, 94, 0.1)',
-                border: '1px solid rgba(244, 63, 94, 0.32)',
-                color: '#fb7185',
-                fontSize: '0.82rem',
-                marginBottom: '1.4rem',
-                textAlign: 'center',
-              }}
-            >
-              {error}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit}>
-            {/* Email */}
-            <div className="form-group">
-              <label
-                className="form-label"
-                style={{
-                  fontSize: '0.74rem',
-                  letterSpacing: '0.12em',
-                  textTransform: 'uppercase',
-                  color: 'rgba(148, 163, 184, 0.9)',
-                  fontWeight: 600,
-                }}
-              >
-                Email Address
-              </label>
-              <div style={{ position: 'relative' }}>
-                <input
-                  type="email"
-                  className="form-control"
-                  placeholder="name@domain.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  id="input-login-email"
-                  style={{
-                    paddingLeft: '2.75rem',
-                    height: '50px',
-                    borderRadius: '14px',
-                    background: 'rgba(255, 255, 255, 0.035)',
-                    border: '1px solid rgba(255, 255, 255, 0.09)',
-                    color: '#f1f5f9',
-                    fontSize: '0.9rem',
-                    transition: 'border-color 0.2s, box-shadow 0.2s, background 0.2s',
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = 'rgba(167, 139, 250, 0.65)';
-                    e.target.style.background = 'rgba(255, 255, 255, 0.055)';
-                    e.target.style.boxShadow = '0 0 0 4px rgba(124, 58, 237, 0.14)';
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = 'rgba(255, 255, 255, 0.09)';
-                    e.target.style.background = 'rgba(255, 255, 255, 0.035)';
-                    e.target.style.boxShadow = 'none';
-                  }}
-                />
-                <Mail
-                  size={17}
-                  color="rgba(148, 163, 184, 0.8)"
-                  style={{
-                    position: 'absolute',
-                    left: '1rem',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    pointerEvents: 'none',
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Password */}
-            <div className="form-group" style={{ marginBottom: '1.9rem' }}>
-              <label
-                className="form-label"
-                style={{
-                  fontSize: '0.74rem',
-                  letterSpacing: '0.12em',
-                  textTransform: 'uppercase',
-                  color: 'rgba(148, 163, 184, 0.9)',
-                  fontWeight: 600,
-                }}
-              >
-                Password
-              </label>
-              <div style={{ position: 'relative' }}>
-                <input
-                  type="password"
-                  className="form-control"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  id="input-login-password"
-                  style={{
-                    paddingLeft: '2.75rem',
-                    height: '50px',
-                    borderRadius: '14px',
-                    background: 'rgba(255, 255, 255, 0.035)',
-                    border: '1px solid rgba(255, 255, 255, 0.09)',
-                    color: '#f1f5f9',
-                    fontSize: '0.9rem',
-                    transition: 'border-color 0.2s, box-shadow 0.2s, background 0.2s',
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = 'rgba(34, 211, 238, 0.6)';
-                    e.target.style.background = 'rgba(255, 255, 255, 0.055)';
-                    e.target.style.boxShadow = '0 0 0 4px rgba(34, 211, 238, 0.12)';
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = 'rgba(255, 255, 255, 0.09)';
-                    e.target.style.background = 'rgba(255, 255, 255, 0.035)';
-                    e.target.style.boxShadow = 'none';
-                  }}
-                />
-                <Lock
-                  size={17}
-                  color="rgba(148, 163, 184, 0.8)"
-                  style={{
-                    position: 'absolute',
-                    left: '1rem',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    pointerEvents: 'none',
-                  }}
-                />
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              className="btn btn-primary btn-lg"
-              disabled={submitting}
-              id="btn-login-submit"
-              style={{
-                width: '100%',
-                height: '52px',
-                borderRadius: '14px',
-                border: 'none',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.55rem',
-                fontSize: '0.94rem',
-                fontWeight: 700,
-                letterSpacing: '0.01em',
-                color: '#ffffff',
-                cursor: submitting ? 'not-allowed' : 'pointer',
-                opacity: submitting ? 0.7 : 1,
-                background:
-                  'linear-gradient(100deg, #7c3aed 0%, #6366f1 50%, #22d3ee 100%)',
-                boxShadow:
-                  '0 14px 34px rgba(99, 102, 241, 0.38), inset 0 1px 0 rgba(255,255,255,0.28)',
-                transition: 'transform 0.18s ease, box-shadow 0.18s ease',
-              }}
-              onMouseEnter={(e) => {
-                if (submitting) return;
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow =
-                  '0 20px 44px rgba(99, 102, 241, 0.5), inset 0 1px 0 rgba(255,255,255,0.3)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow =
-                  '0 14px 34px rgba(99, 102, 241, 0.38), inset 0 1px 0 rgba(255,255,255,0.28)';
-              }}
-            >
-              {submitting ? 'Authenticating...' : 'Sign In to Workspace'}
-              <ArrowRight size={17} />
-            </button>
-          </form>
-
-          <p
-            style={{
-              marginTop: '1.9rem',
-              fontSize: '0.75rem',
-              textAlign: 'center',
-              color: 'rgba(100, 116, 139, 0.9)',
-              letterSpacing: '0.02em',
-            }}
-          >
-            Protected workspace · Authorized access only
-          </p>
-        </div>
-      </div>
-
-      {/* Responsive + animation styles */}
+    <main className="relative min-h-screen w-full flex bg-[#080910] text-white overflow-hidden">
+      {/* ---------------------- MikeAndrewDesigner login styles (90% transparent) ---------------------- */}
       <style>{`
-        @keyframes loginFade {
-          from { opacity: 0; transform: translateY(14px) scale(0.985); }
-          to   { opacity: 1; transform: translateY(0) scale(1); }
+        .ui-login {
+          width: 380px;
+          min-height: 440px;
+          /* 90% transparent: rgba(44,44,44,0.1) */
+          background: rgba(44, 44, 44, 0.1);
+          backdrop-filter: blur(6px);
+          -webkit-backdrop-filter: blur(6px);
+          padding: 47px 42px 46px;
+          color: #fff;
+          border-radius: 17px;
+          border: 1px solid rgba(255, 255, 255, 0.04);
+          box-shadow:
+            0 8px 32px rgba(0, 0, 0, 0.08),
+            inset 0 1px 0 rgba(255, 255, 255, 0.03);
+          font-size: 1.15em;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+            Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+          position: relative;
         }
-        @media (max-width: 820px) {
-          .login-brand-panel { display: none !important; }
-          /* collapse grid to single column when brand panel hides */
-          div[style*="max-width: 920px"] {
-            grid-template-columns: 1fr !important;
+
+        .ui-login input[type="email"],
+        .ui-login input[type="text"],
+        .ui-login input[type="password"] {
+          opacity: 1;
+          display: block;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          outline: none;
+          width: 100%;
+          padding: 13px 18px;
+          margin: 20px 0 0 0;
+          font-size: 0.8em;
+          border-radius: 100px;
+          background: rgba(60, 60, 60, 0.12);
+          backdrop-filter: blur(6px);
+          -webkit-backdrop-filter: blur(6px);
+          color: #fff;
+          transition: background 0.3s ease, box-shadow 0.3s ease,
+            border-color 0.3s ease;
+        }
+
+        .ui-login input[type="email"]::placeholder,
+        .ui-login input[type="text"]::placeholder,
+        .ui-login input[type="password"]::placeholder {
+          color: rgba(255, 255, 255, 0.4);
+        }
+
+        .ui-login input:focus {
+          animation: ui-bounce 1s;
+          -webkit-appearance: none;
+          background: rgba(60, 60, 60, 0.28);
+          border-color: rgba(91, 66, 243, 0.45);
+          box-shadow: 0 0 0 3px rgba(91, 66, 243, 0.14);
+        }
+
+        .ui-login input[type="submit"],
+        .ui-login .ui-h1 {
+          border: 0;
+          outline: 0;
+          width: 100%;
+          padding: 13px;
+          margin: 40px 0 0 0;
+          border-radius: 500px;
+          font-weight: 600;
+          animation: ui-bounce2 1.6s;
+        }
+
+        .ui-h1 {
+          padding: 0;
+          position: relative;
+          top: -35px;
+          display: block;
+          margin-bottom: -10px;
+          font-size: 1.3em;
+        }
+
+        .ui-btn {
+          background: linear-gradient(144deg, #af40ff, #5b42f3 50%, #00ddeb);
+          color: #fff;
+          padding: 16px !important;
+          cursor: pointer;
+          transition: all 0.4s ease;
+          box-shadow: 0 8px 28px rgba(91, 66, 243, 0.3);
+        }
+
+        .ui-btn:hover {
+          background: linear-gradient(144deg, #1e1e1e, 20%, #1e1e1e 50%, #1e1e1e);
+          color: rgb(255, 255, 255);
+          box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4);
+        }
+
+        .ui-btn:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        .ui-login input[type=email],
+        .ui-login input[type=text] {
+          animation: ui-bounce 1s;
+          -webkit-appearance: none;
+        }
+
+        .ui-login input[type=password] {
+          animation: ui-bounce1 1.3s;
+        }
+
+        .ui-span {
+          font-weight: bolder;
+          background: -webkit-linear-gradient(#b563ff, #535efc, #0ec8ee);
+          -webkit-background-clip: text;
+          background-clip: text;
+          -webkit-text-fill-color: transparent;
+          border-bottom: 4px solid transparent;
+          border-image: linear-gradient(0.25turn, #535efc, #0ec8ee, #0ec8ee);
+          border-image-slice: 1;
+          display: inline;
+        }
+
+        @media only screen and (max-width: 600px) {
+          .ui-login {
+            width: 100%;
+            padding: 2.5em 1.8em;
+          }
+        }
+
+        @keyframes ui-bounce {
+          0% {
+            transform: translateY(-250px);
+            opacity: 0;
+          }
+        }
+
+        @keyframes ui-bounce1 {
+          0% { opacity: 0; }
+          40% {
+            transform: translateY(-100px);
+            opacity: 0;
+          }
+        }
+
+        @keyframes ui-bounce2 {
+          0% { opacity: 0; }
+          70% {
+            transform: translateY(-20px);
+            opacity: 0;
           }
         }
       `}</style>
-    </div>
+
+      {/* ================= SHARED FULL-SCREEN BACKGROUND ================= */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-[-20%] left-[20%] w-[700px] h-[700px] rounded-full bg-indigo-600/[0.14] blur-[160px]" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[700px] h-[700px] rounded-full bg-purple-600/[0.13] blur-[170px]" />
+        <div className="absolute top-[30%] right-[30%] w-[500px] h-[500px] rounded-full bg-fuchsia-600/[0.06] blur-[150px]" />
+      </div>
+
+      <canvas
+        ref={canvasRef}
+        className="fixed inset-0 w-full h-full pointer-events-none opacity-60"
+      />
+
+      {/* ========================= SPLIT LAYOUT (no divider) ========================= */}
+
+      {/* LEFT PANEL */}
+      <section className="relative hidden lg:flex w-1/2 min-h-screen flex-col items-center justify-center overflow-hidden">
+        <div className="relative z-10 max-w-lg px-12">
+          <div className="flex items-center gap-2 mb-16">
+            <span className="text-2xl font-bold tracking-[0.15em]">EVO</span>
+            <span className="text-2xl font-light tracking-[0.15em] text-indigo-300">
+              ART
+            </span>
+            <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 ml-1" />
+          </div>
+
+          <span className="text-[10px] uppercase tracking-[0.35em] text-indigo-300 font-semibold">
+            Creative Intelligence
+          </span>
+
+          <h1 className="mt-7 text-6xl xl:text-7xl leading-[1.05] font-semibold tracking-[-0.045em]">
+            Create
+            <br />
+            <span className="bg-gradient-to-r from-indigo-300 via-purple-300 to-indigo-400 bg-clip-text text-transparent">
+              without limits.
+            </span>
+          </h1>
+
+          <p className="mt-8 text-base text-white/45 leading-8 max-w-md">
+            Strategy, creativity, technology and business intelligence —
+            bringing ambitious ideas to life. Your next chapter starts here.
+          </p>
+
+          <div className="mt-16 grid grid-cols-3 gap-8 border-t border-white/10 pt-8">
+            {[
+              ["1000+", "Brands launched"],
+              ["2030", "Project vision"],
+              ["04", "Divisions"],
+            ].map(([number, label]) => (
+              <div key={label}>
+                <p className="text-3xl font-semibold tracking-tight">{number}</p>
+                <p className="mt-2 text-[9px] uppercase tracking-[0.2em] text-white/35">
+                  {label}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <p className="mt-20 text-[10px] tracking-[0.25em] uppercase text-white/25">
+            Think forward · Create differently
+          </p>
+        </div>
+      </section>
+
+      {/* RIGHT PANEL */}
+      <section className="relative flex-1 min-h-screen flex items-center justify-center px-6 py-16 sm:px-12">
+        <div className="relative z-10 w-full max-w-[480px] flex flex-col items-center">
+          <div className="lg:hidden mb-10 self-start">
+            <span className="text-xl font-bold tracking-[0.15em]">EVO</span>
+            <span className="text-xl font-light tracking-[0.15em] text-indigo-300">
+              {" "}ART
+            </span>
+          </div>
+
+          <div className="mb-8 flex items-center gap-2">
+            <span className="w-7 h-px bg-indigo-400" />
+            <span className="text-[10px] uppercase tracking-[0.3em] text-indigo-300">
+              Client portal
+            </span>
+            <span className="w-7 h-px bg-indigo-400" />
+          </div>
+
+          {/* ==================== 90% TRANSPARENT MIKEANDREWDESIGNER FORM ==================== */}
+          <div className="ui-login">
+            <form onSubmit={handleSubmit}>
+              <h1 className="ui-h1">
+                Welcome to <span className="ui-span">EVO ART</span>
+              </h1>
+
+              {error && (
+                <div
+                  style={{
+                    padding: "0.6rem 0.85rem",
+                    borderRadius: "12px",
+                    background: "rgba(244, 63, 94, 0.16)",
+                    border: "1px solid rgba(244, 63, 94, 0.35)",
+                    color: "#fb7185",
+                    fontSize: "0.78rem",
+                    marginBottom: "0.8rem",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                    textAlign: "left",
+                    lineHeight: 1.3,
+                  }}
+                >
+                  <AlertCircle size={15} style={{ flexShrink: 0 }} />
+                  <span>{error}</span>
+                </div>
+              )}
+
+              <input
+                type="text"
+                name="email"
+                placeholder="Email or Username"
+                required
+                autoComplete="username"
+              />
+              <input
+                type="password"
+                name="password"
+                placeholder="Password"
+                required
+                autoComplete="current-password"
+              />
+
+              <input
+                type="submit"
+                value={loading ? "Signing In..." : "Sign In"}
+                className="ui-btn"
+                disabled={loading}
+              />
+            </form>
+          </div>
+          {/* ================== END 90% TRANSPARENT FORM ================== */}
+
+          <p className="mt-10 text-center text-[9px] uppercase tracking-[0.2em] text-white/20">
+            Secure access · EVO ART
+          </p>
+        </div>
+      </section>
+    </main>
   );
-};
+}

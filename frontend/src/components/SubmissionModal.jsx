@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
-import { X, UploadCloud, File, AlertCircle, Info } from 'lucide-react';
+import { X, UploadCloud, File, AlertCircle, Info, Loader2 } from 'lucide-react';
 
 export const SubmissionModal = ({ assignment, onClose, onSuccess }) => {
   const { showToast, refreshUser } = useAuth();
@@ -129,34 +129,76 @@ export const SubmissionModal = ({ assignment, onClose, onSuccess }) => {
                 />
               </div>
 
+              {/* Selected Deliverable Files Preview with Thumbnails */}
               {files.length > 0 && (
-                <div style={{ marginTop: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                  <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                <div style={{ marginTop: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>
                     Selected Files ({files.length}):
                   </div>
-                  {files.map((file, idx) => (
-                    <div
-                      key={idx}
-                      style={{
-                        padding: '0.4rem 0.75rem',
-                        background: 'rgba(255, 255, 255, 0.04)',
-                        borderRadius: '6px',
-                        border: '1px solid var(--border-subtle)',
-                        fontSize: '0.82rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                      }}
-                    >
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <File size={14} color="var(--accent-cyan)" />
-                        {file.name}
-                      </span>
-                      <span style={{ color: 'var(--text-dim)', fontSize: '0.75rem' }}>
-                        {(file.size / (1024 * 1024)).toFixed(2)} MB
-                      </span>
-                    </div>
-                  ))}
+                  {files.map((file, idx) => {
+                    const isImg = file.type?.startsWith('image/') || /\.(jpe?g|png|webp|gif|svg)$/i.test(file.name);
+                    return (
+                      <div
+                        key={idx}
+                        className={submitting ? 'upload-pulse' : ''}
+                        style={{
+                          padding: '0.45rem 0.75rem',
+                          background: 'rgba(255, 255, 255, 0.04)',
+                          borderRadius: '8px',
+                          border: '1px solid var(--border-subtle)',
+                          fontSize: '0.82rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          transition: 'all 0.3s ease',
+                        }}
+                      >
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', overflow: 'hidden' }}>
+                          {isImg ? (
+                            <img
+                              src={URL.createObjectURL(file)}
+                              alt={file.name}
+                              style={{ width: '30px', height: '30px', objectFit: 'cover', borderRadius: '6px', flexShrink: 0 }}
+                            />
+                          ) : (
+                            <File size={16} color="var(--accent-cyan)" style={{ flexShrink: 0 }} />
+                          )}
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {file.name}
+                          </span>
+                        </span>
+                        <span style={{ color: 'var(--text-dim)', fontSize: '0.75rem', flexShrink: 0, marginLeft: '0.5rem' }}>
+                          {(file.size / (1024 * 1024)).toFixed(2)} MB
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Active Google Drive Cloud Upload Progress Effect */}
+              {submitting && (
+                <div
+                  style={{
+                    marginTop: '0.9rem',
+                    padding: '0.85rem 1rem',
+                    background: 'rgba(6, 182, 212, 0.1)',
+                    border: '1px solid rgba(6, 182, 212, 0.35)',
+                    borderRadius: '10px',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.82rem' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', color: '#67e8f9', fontWeight: 600 }}>
+                      <Loader2 size={15} className="animate-spin" />
+                      {`Uploading ${files.length} deliverable(s) to Google Drive...`}
+                    </span>
+                    <span style={{ fontSize: '0.74rem', color: 'var(--accent-cyan)', fontWeight: 600 }}>
+                      Syncing
+                    </span>
+                  </div>
+                  <div style={{ width: '100%', height: '4px', background: 'rgba(255, 255, 255, 0.08)', borderRadius: '999px', overflow: 'hidden' }}>
+                    <div className="upload-progress-animated" />
+                  </div>
                 </div>
               )}
             </div>
@@ -214,7 +256,7 @@ export const SubmissionModal = ({ assignment, onClose, onSuccess }) => {
           </div>
 
           <div className="modal-footer">
-            <button type="button" onClick={onClose} className="btn btn-secondary">
+            <button type="button" onClick={onClose} className="btn btn-secondary" disabled={submitting}>
               Cancel
             </button>
             <button
@@ -222,12 +264,20 @@ export const SubmissionModal = ({ assignment, onClose, onSuccess }) => {
               className="btn btn-primary"
               disabled={submitting || files.length === 0}
               id="btn-upload-submission"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
             >
-              {submitting ? 'Uploading...' : isRevision ? 'Submit Revised Files' : 'Submit Deliverables'}
+              {submitting ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  <span>Uploading to Google Drive...</span>
+                </>
+              ) : (
+                isRevision ? 'Submit Revised Files' : 'Submit Deliverables'
+              )}
             </button>
           </div>
         </form>
+          </div>
       </div>
-    </div>
-  );
+      );
 };

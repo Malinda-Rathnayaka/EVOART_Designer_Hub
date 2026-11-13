@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
-import { X, FolderPlus, Pencil, UploadCloud, File, AlertCircle, Image as ImageIcon } from 'lucide-react';
+import { X, FolderPlus, Pencil, UploadCloud, File, AlertCircle, Image as ImageIcon, Loader2 } from 'lucide-react';
 
 // Accepts optional `project` prop — if provided the modal runs in Edit mode,
 // otherwise it runs in Create mode.
@@ -296,51 +296,105 @@ export const ProjectModal = ({ onClose, onSuccess, project }) => {
                 />
               </div>
 
+              {/* Selected Files Preview with Thumbnails */}
               {referenceFiles.length > 0 && (
                 <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                  {referenceFiles.map((f, i) => (
-                    <div
-                      key={i}
-                      style={{
-                        padding: '0.4rem 0.75rem',
-                        background: 'rgba(255, 255, 255, 0.04)',
-                        borderRadius: '6px',
-                        border: '1px solid var(--border-subtle)',
-                        fontSize: '0.82rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                      }}
-                    >
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <File size={14} color="var(--accent-cyan)" />
-                        {f.name}
-                      </span>
-                      <span style={{ color: 'var(--text-dim)', fontSize: '0.75rem' }}>
-                        {(f.size / (1024 * 1024)).toFixed(2)} MB
-                      </span>
-                    </div>
-                  ))}
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>
+                    Selected For Upload ({referenceFiles.length})
+                  </div>
+                  {referenceFiles.map((f, i) => {
+                    const isImg = f.type?.startsWith('image/') || /\.(jpe?g|png|webp|gif|svg)$/i.test(f.name);
+                    return (
+                      <div
+                        key={i}
+                        className={submitting ? 'upload-pulse' : ''}
+                        style={{
+                          padding: '0.45rem 0.75rem',
+                          background: 'rgba(255, 255, 255, 0.04)',
+                          borderRadius: '8px',
+                          border: '1px solid var(--border-subtle)',
+                          fontSize: '0.82rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          transition: 'all 0.3s ease',
+                        }}
+                      >
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', overflow: 'hidden' }}>
+                          {isImg ? (
+                            <img
+                              src={URL.createObjectURL(f)}
+                              alt={f.name}
+                              style={{ width: '30px', height: '30px', objectFit: 'cover', borderRadius: '6px', flexShrink: 0 }}
+                            />
+                          ) : (
+                            <File size={16} color="var(--accent-cyan)" style={{ flexShrink: 0 }} />
+                          )}
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {f.name}
+                          </span>
+                        </span>
+                        <span style={{ color: 'var(--text-dim)', fontSize: '0.75rem', flexShrink: 0, marginLeft: '0.5rem' }}>
+                          {(f.size / (1024 * 1024)).toFixed(2)} MB
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Active Cloud Uploading Shimmer Progress Effect */}
+              {submitting && (
+                <div
+                  style={{
+                    marginTop: '0.9rem',
+                    padding: '0.85rem 1rem',
+                    background: 'rgba(99, 102, 241, 0.1)',
+                    border: '1px solid rgba(99, 102, 241, 0.35)',
+                    borderRadius: '10px',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.82rem' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', color: '#c4b5fd', fontWeight: 600 }}>
+                      <Loader2 size={15} className="animate-spin" />
+                      {referenceFiles.length > 0
+                        ? `Transferring ${referenceFiles.length} file(s) to Cloudinary...`
+                        : 'Saving project specifications...'}
+                    </span>
+                    <span style={{ fontSize: '0.74rem', color: 'var(--accent-cyan)', fontWeight: 600 }}>
+                      Cloud Sync Active
+                    </span>
+                  </div>
+                  <div style={{ width: '100%', height: '4px', background: 'rgba(255, 255, 255, 0.08)', borderRadius: '999px', overflow: 'hidden' }}>
+                    <div className="upload-progress-animated" />
+                  </div>
                 </div>
               )}
             </div>
           </div>
 
           <div className="modal-footer">
-            <button type="button" onClick={onClose} className="btn btn-secondary">
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={submitting}
-              id="btn-confirm-create-project"
-            >
-              {/* Label changes based on mode and submission state */}
-              {submitting
-                ? isEditMode ? 'Saving Changes...' : 'Creating Project...'
-                : isEditMode ? 'Save Changes' : 'Publish Project'}
-            </button>
+              <button type="button" onClick={onClose} className="btn btn-secondary" disabled={submitting}>
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={submitting}
+                id="btn-confirm-create-project"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
+              >
+                {submitting ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    <span>
+                      {referenceFiles.length > 0 ? 'Uploading to Cloudinary...' : 'Saving Project...'}
+                    </span>
+                  </>
+                ) : (
+                  isEditMode ? 'Save Changes' : 'Publish Project'
+                )}
+              </button>
           </div>
         </form>
       </div>

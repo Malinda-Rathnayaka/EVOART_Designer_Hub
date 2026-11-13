@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { QuotaBadge } from './QuotaBadge';
+import { ThemeToggle } from './ThemeToggle';
 import {
   Layers,
   FolderKanban,
@@ -104,13 +105,15 @@ export const Navbar = ({ currentTab, onSelectTab, onProfileClick }) => {
         </div>
 
         {/* Right Section: Quota & User Profile with Logout */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
           {isDesigner && (
             <QuotaBadge
               activeCount={user.activeAssignmentsCount || 0}
               max={user.maxActiveAssignments || 3}
             />
           )}
+
+          <ThemeToggle />
 
           {/* User Profile Pill */}
           {user && (

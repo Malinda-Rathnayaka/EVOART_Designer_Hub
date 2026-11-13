@@ -99,9 +99,9 @@ export function LoginPage() {
   };
 
   return (
-    <main className="relative min-h-screen w-full flex bg-[#080910] text-white overflow-hidden">
-      {/* ---------------------- MikeAndrewDesigner login styles (90% transparent) ---------------------- */}
-      <style>{`
+      <main data-theme="dark" className="relative min-h-screen w-full flex bg-[#080910] text-white overflow-hidden">
+        {/* ---------------------- MikeAndrewDesigner login styles (90% transparent) ---------------------- */}
+        <style>{`
         .ui-login {
           width: 380px;
           min-height: 440px;
@@ -250,146 +250,146 @@ export function LoginPage() {
         }
       `}</style>
 
-      {/* ================= SHARED FULL-SCREEN BACKGROUND ================= */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-[-20%] left-[20%] w-[700px] h-[700px] rounded-full bg-indigo-600/[0.14] blur-[160px]" />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[700px] h-[700px] rounded-full bg-purple-600/[0.13] blur-[170px]" />
-        <div className="absolute top-[30%] right-[30%] w-[500px] h-[500px] rounded-full bg-fuchsia-600/[0.06] blur-[150px]" />
-      </div>
-
-      <canvas
-        ref={canvasRef}
-        className="fixed inset-0 w-full h-full pointer-events-none opacity-60"
-      />
-
-      {/* ========================= SPLIT LAYOUT (no divider) ========================= */}
-
-      {/* LEFT PANEL */}
-      <section className="relative hidden lg:flex w-1/2 min-h-screen flex-col items-center justify-center overflow-hidden">
-        <div className="relative z-10 max-w-lg px-12">
-          <div className="flex items-center gap-2 mb-16">
-            <span className="text-2xl font-bold tracking-[0.15em]">EVO</span>
-            <span className="text-2xl font-light tracking-[0.15em] text-indigo-300">
-              ART
-            </span>
-            <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 ml-1" />
-          </div>
-
-          <span className="text-[10px] uppercase tracking-[0.35em] text-indigo-300 font-semibold">
-            Creative Intelligence
-          </span>
-
-          <h1 className="mt-7 text-6xl xl:text-7xl leading-[1.05] font-semibold tracking-[-0.045em]">
-            Create
-            <br />
-            <span className="bg-gradient-to-r from-indigo-300 via-purple-300 to-indigo-400 bg-clip-text text-transparent">
-              without limits.
-            </span>
-          </h1>
-
-          <p className="mt-8 text-base text-white/45 leading-8 max-w-md">
-            Strategy, creativity, technology and business intelligence —
-            bringing ambitious ideas to life. Your next chapter starts here.
-          </p>
-
-          <div className="mt-16 grid grid-cols-3 gap-8 border-t border-white/10 pt-8">
-            {[
-              ["1000+", "Brands launched"],
-              ["2030", "Project vision"],
-              ["04", "Divisions"],
-            ].map(([number, label]) => (
-              <div key={label}>
-                <p className="text-3xl font-semibold tracking-tight">{number}</p>
-                <p className="mt-2 text-[9px] uppercase tracking-[0.2em] text-white/35">
-                  {label}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          <p className="mt-20 text-[10px] tracking-[0.25em] uppercase text-white/25">
-            Think forward · Create differently
-          </p>
+        {/* ================= SHARED FULL-SCREEN BACKGROUND ================= */}
+        <div className="fixed inset-0 pointer-events-none">
+          <div className="absolute top-[-20%] left-[20%] w-[700px] h-[700px] rounded-full bg-indigo-600/[0.14] blur-[160px]" />
+          <div className="absolute bottom-[-20%] right-[-10%] w-[700px] h-[700px] rounded-full bg-purple-600/[0.13] blur-[170px]" />
+          <div className="absolute top-[30%] right-[30%] w-[500px] h-[500px] rounded-full bg-fuchsia-600/[0.06] blur-[150px]" />
         </div>
-      </section>
 
-      {/* RIGHT PANEL */}
-      <section className="relative flex-1 min-h-screen flex items-center justify-center px-6 py-16 sm:px-12">
-        <div className="relative z-10 w-full max-w-[480px] flex flex-col items-center">
-          <div className="lg:hidden mb-10 self-start">
-            <span className="text-xl font-bold tracking-[0.15em]">EVO</span>
-            <span className="text-xl font-light tracking-[0.15em] text-indigo-300">
-              {" "}ART
+        <canvas
+          ref={canvasRef}
+          className="fixed inset-0 w-full h-full pointer-events-none opacity-60"
+        />
+
+        {/* ========================= SPLIT LAYOUT (no divider) ========================= */}
+
+        {/* LEFT PANEL */}
+        <section className="relative hidden lg:flex w-1/2 min-h-screen flex-col items-center justify-center overflow-hidden">
+          <div className="relative z-10 max-w-lg px-12">
+            <div className="flex items-center gap-2 mb-16">
+              <span className="text-2xl font-bold tracking-[0.15em]">EVO</span>
+              <span className="text-2xl font-light tracking-[0.15em] text-indigo-300">
+                ART
+              </span>
+              <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 ml-1" />
+            </div>
+
+            <span className="text-[10px] uppercase tracking-[0.35em] text-indigo-300 font-semibold">
+              Creative Intelligence
             </span>
-          </div>
 
-          <div className="mb-8 flex items-center gap-2">
-            <span className="w-7 h-px bg-indigo-400" />
-            <span className="text-[10px] uppercase tracking-[0.3em] text-indigo-300">
-              Client portal
-            </span>
-            <span className="w-7 h-px bg-indigo-400" />
-          </div>
+            <h1 className="mt-7 text-6xl xl:text-7xl leading-[1.05] font-semibold tracking-[-0.045em]">
+              Create
+              <br />
+              <span className="bg-gradient-to-r from-indigo-300 via-purple-300 to-indigo-400 bg-clip-text text-transparent">
+                without limits.
+              </span>
+            </h1>
 
-          {/* ==================== 90% TRANSPARENT MIKEANDREWDESIGNER FORM ==================== */}
-          <div className="ui-login">
-            <form onSubmit={handleSubmit}>
-              <h1 className="ui-h1">
-                Welcome to <span className="ui-span">EVO ART</span>
-              </h1>
+            <p className="mt-8 text-base text-white/45 leading-8 max-w-md">
+              Strategy, creativity, technology and business intelligence —
+              bringing ambitious ideas to life. Your next chapter starts here.
+            </p>
 
-              {error && (
-                <div
-                  style={{
-                    padding: "0.6rem 0.85rem",
-                    borderRadius: "12px",
-                    background: "rgba(244, 63, 94, 0.16)",
-                    border: "1px solid rgba(244, 63, 94, 0.35)",
-                    color: "#fb7185",
-                    fontSize: "0.78rem",
-                    marginBottom: "0.8rem",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.5rem",
-                    textAlign: "left",
-                    lineHeight: 1.3,
-                  }}
-                >
-                  <AlertCircle size={15} style={{ flexShrink: 0 }} />
-                  <span>{error}</span>
+            <div className="mt-16 grid grid-cols-3 gap-8 border-t border-white/10 pt-8">
+              {[
+                ["1000+", "Brands launched"],
+                ["2030", "Project vision"],
+                ["04", "Divisions"],
+              ].map(([number, label]) => (
+                <div key={label}>
+                  <p className="text-3xl font-semibold tracking-tight">{number}</p>
+                  <p className="mt-2 text-[9px] uppercase tracking-[0.2em] text-white/35">
+                    {label}
+                  </p>
                 </div>
-              )}
+              ))}
+            </div>
 
-              <input
-                type="text"
-                name="email"
-                placeholder="Email or Username"
-                required
-                autoComplete="username"
-              />
-              <input
-                type="password"
-                name="password"
-                placeholder="Password"
-                required
-                autoComplete="current-password"
-              />
-
-              <input
-                type="submit"
-                value={loading ? "Signing In..." : "Sign In"}
-                className="ui-btn"
-                disabled={loading}
-              />
-            </form>
+            <p className="mt-20 text-[10px] tracking-[0.25em] uppercase text-white/25">
+              Think forward · Create differently
+            </p>
           </div>
-          {/* ================== END 90% TRANSPARENT FORM ================== */}
+        </section>
 
-          <p className="mt-10 text-center text-[9px] uppercase tracking-[0.2em] text-white/20">
-            Secure access · EVO ART
-          </p>
-        </div>
-      </section>
-    </main>
-  );
+        {/* RIGHT PANEL */}
+        <section className="relative flex-1 min-h-screen flex items-center justify-center px-6 py-16 sm:px-12">
+          <div className="relative z-10 w-full max-w-[480px] flex flex-col items-center">
+            <div className="lg:hidden mb-10 self-start">
+              <span className="text-xl font-bold tracking-[0.15em]">EVO</span>
+              <span className="text-xl font-light tracking-[0.15em] text-indigo-300">
+                {" "}ART
+              </span>
+            </div>
+
+            <div className="mb-8 flex items-center gap-2">
+              <span className="w-7 h-px bg-indigo-400" />
+              <span className="text-[10px] uppercase tracking-[0.3em] text-indigo-300">
+                Client portal
+              </span>
+              <span className="w-7 h-px bg-indigo-400" />
+            </div>
+
+            {/* ==================== 90% TRANSPARENT MIKEANDREWDESIGNER FORM ==================== */}
+            <div className="ui-login">
+              <form onSubmit={handleSubmit}>
+                <h1 className="ui-h1">
+                  Welcome to <span className="ui-span">EVO ART</span>
+                </h1>
+
+                {error && (
+                  <div
+                    style={{
+                      padding: "0.6rem 0.85rem",
+                      borderRadius: "12px",
+                      background: "rgba(244, 63, 94, 0.16)",
+                      border: "1px solid rgba(244, 63, 94, 0.35)",
+                      color: "#fb7185",
+                      fontSize: "0.78rem",
+                      marginBottom: "0.8rem",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.5rem",
+                      textAlign: "left",
+                      lineHeight: 1.3,
+                    }}
+                  >
+                    <AlertCircle size={15} style={{ flexShrink: 0 }} />
+                    <span>{error}</span>
+                  </div>
+                )}
+
+                <input
+                  type="text"
+                  name="email"
+                  placeholder="Email or Username"
+                  required
+                  autoComplete="username"
+                />
+                <input
+                  type="password"
+                  name="password"
+                  placeholder="Password"
+                  required
+                  autoComplete="current-password"
+                />
+
+                <input
+                  type="submit"
+                  value={loading ? "Signing In..." : "Sign In"}
+                  className="ui-btn"
+                  disabled={loading}
+                />
+              </form>
+            </div>
+            {/* ================== END 90% TRANSPARENT FORM ================== */}
+
+            <p className="mt-10 text-center text-[9px] uppercase tracking-[0.2em] text-white/20">
+              Secure access · EVO ART
+            </p>
+          </div>
+        </section>
+      </main>
+      );
 }

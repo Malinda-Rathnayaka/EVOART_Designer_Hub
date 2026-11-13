@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { AlertCircle, KeyRound, UserCircle, X } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
+import { ThemeToggle } from './ThemeToggle';
+import { AlertCircle, KeyRound, UserCircle, X, Sun, Moon } from 'lucide-react';
 
 export const ProfileModal = ({ onClose }) => {
   const { user, updateProfile } = useAuth();
+  const { isDark } = useTheme();
   const [name, setName] = useState(user?.name || '');
   const [bio, setBio] = useState(user?.bio || '');
   const [skills, setSkills] = useState(user?.skills?.join(', ') || '');
@@ -139,6 +142,32 @@ export const ProfileModal = ({ onClose }) => {
               <input id="profile-new-password" type="password" className="form-control" placeholder="New password (at least 6 characters)" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} minLength={6} autoComplete="new-password" style={{ marginTop: '0.65rem' }} />
               <input id="profile-confirm-password" type="password" className="form-control" placeholder="Type new password again" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} minLength={6} autoComplete="new-password" style={{ marginTop: '0.65rem' }} />
               <small style={{ color: 'var(--text-dim)' }}>Leave all three fields blank to keep your current password.</small>
+            </div>
+
+            {/* Theme Appearance Setting */}
+            <div className="form-group" style={{ marginTop: '1rem', marginBottom: '0.5rem' }}>
+              <label className="form-label">Theme Appearance</label>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '0.75rem 1rem',
+                  borderRadius: 'var(--radius-md)',
+                  background: 'var(--bg-surface-elevated)',
+                  border: '1px solid var(--border-light)',
+                }}
+              >
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-main)' }}>
+                    Interface Mode
+                  </span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>
+                    Currently using {isDark ? 'Dark Theme' : 'Light Theme'}
+                  </span>
+                </div>
+                <ThemeToggle showLabel size="sm" />
+              </div>
             </div>
           </div>
 

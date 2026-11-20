@@ -39,7 +39,7 @@ const checkDesignerCapacity = async (designerId) => {
  * Awards an assignment to a winning designer for a project.
  * Enforces the strict maximum 3 active assignments rule.
  */
-const awardAssignment = async ({ projectId, bidId, adminNotes = '' }) => {
+const awardAssignment = async ({ projectId, bidId, revisionId, adminNotes = '' }) => {
   // Try using transactions if replica set is active; otherwise fall back to atomic sequence
   let session = null;
   const isReplicaSet =
@@ -70,6 +70,16 @@ const awardAssignment = async ({ projectId, bidId, adminNotes = '' }) => {
     }
     if (bid.project.toString() !== projectId.toString()) {
       throw new Error('Selected bid does not belong to this project');
+    }
+
+    if (revisionId && bid.revisions && bid.revisions.length > 0) {
+      const revision = bid.revisions.find((item) => item._id.toString() === revisionId);
+      if (!revision) {
+        throw new Error('Selected bid revision was not found');
+      }
+      bid.amount = revision.amount;
+      bid.proposalText = revision.proposalText || '';
+      bid.deliveryDays = revision.deliveryDays;
     }
 
     const designerId = bid.designer._id || bid.designer;

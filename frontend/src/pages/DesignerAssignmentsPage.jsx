@@ -58,6 +58,22 @@ export const DesignerAssignmentsPage = ({ onViewDetails }) => {
     fetchAssignments();
   }, []);
 
+  useEffect(() => {
+    let channel;
+    if ('BroadcastChannel' in window) {
+      channel = new BroadcastChannel('evo-art-assignment-events');
+      channel.onmessage = () => {
+        fetchAssignments();
+      };
+    }
+
+    const intervalId = window.setInterval(fetchAssignments, 10000);
+    return () => {
+      if (channel) channel.close();
+      window.clearInterval(intervalId);
+    };
+  }, []);
+
   const getStatusBadge = (status) => {
     switch (status) {
       case 'in_progress':

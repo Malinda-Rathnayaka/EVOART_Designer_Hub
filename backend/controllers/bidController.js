@@ -68,6 +68,12 @@ const submitBid = async (req, res, next) => {
       proposalText: proposalText ? proposalText.trim() : '',
       deliveryDays: Number(deliveryDays) || 3,
       status: 'submitted',
+      revisions: [{
+        amount: numericAmount,
+        proposalText: proposalText ? proposalText.trim() : '',
+        deliveryDays: Number(deliveryDays) || 3,
+        createdAt: new Date(),
+      }],
     });
 
     res.status(201).json({
@@ -111,6 +117,16 @@ const updateBid = async (req, res, next) => {
       });
     }
 
+    bid.revisions = bid.revisions || [];
+    if (bid.revisions.length === 0) {
+      bid.revisions.push({
+        amount: bid.amount,
+        proposalText: bid.proposalText,
+        deliveryDays: bid.deliveryDays,
+        createdAt: bid.updatedAt || bid.createdAt || new Date(),
+      });
+    }
+
     if (amount !== undefined) {
       const numericAmount = Number(amount);
       if (isNaN(numericAmount) || numericAmount <= 0) {
@@ -131,6 +147,13 @@ const updateBid = async (req, res, next) => {
     if (proposalText !== undefined) bid.proposalText = proposalText.trim();
     if (deliveryDays !== undefined) bid.deliveryDays = Number(deliveryDays);
 
+    bid.revisions = bid.revisions || [];
+    bid.revisions.push({
+      amount: bid.amount,
+      proposalText: bid.proposalText,
+      deliveryDays: bid.deliveryDays,
+      createdAt: new Date(),
+    });
     await bid.save();
 
     res.json({
@@ -171,10 +194,23 @@ const getProjectBids = async (req, res, next) => {
       .populate('designer', 'name email bio skills')
       .sort({ amount: 1 }); // Lowest bid first
 
+    const normalizedBids = bids.map((bid) => {
+      const data = bid.toObject();
+      if (!data.revisions || data.revisions.length === 0) {
+        data.revisions = [{
+          amount: data.amount,
+          proposalText: data.proposalText,
+          deliveryDays: data.deliveryDays,
+          createdAt: data.createdAt,
+        }];
+      }
+      return data;
+    });
+
     res.json({
       success: true,
-      count: bids.length,
-      data: bids,
+      count: normalizedBids.length,
+      data: normalizedBids,
     });
   } catch (error) {
     next(error);

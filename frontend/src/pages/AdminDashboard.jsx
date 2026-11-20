@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import { StatCard } from '../components/StatCard';
@@ -14,6 +14,7 @@ import {
   Search,
   CheckCircle2,
   Filter,
+  Bell,
 } from 'lucide-react';
 
 export const AdminDashboard = ({ onViewDetails }) => {
@@ -23,6 +24,65 @@ export const AdminDashboard = ({ onViewDetails }) => {
   const [loading, setLoading] = useState(true);
   const [filterTab, setFilterTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [bidNotifications, setBidNotifications] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('evo_admin_bid_notifications') || '[]');
+      return Array.isArray(saved) ? saved : [];
+    } catch {
+      return [];
+    }
+  });
+  const [showBidNotifications, setShowBidNotifications] = useState(false);
+  const [unreadBidNotifications, setUnreadBidNotifications] = useState(0);
+  const seenBidSignatures = useRef(new Map());
+  const notificationsInitialized = useRef(false);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        'evo_admin_bid_notifications',
+        JSON.stringify(bidNotifications)
+      );
+    } catch {
+      // Notifications remain available for the current session.
+    }
+  }, [bidNotifications]);
+
+  useEffect(() => {
+    if (!('BroadcastChannel' in window)) return undefined;
+
+    const channel = new BroadcastChannel('evo-art-bid-events');
+    channel.onmessage = (event) => {
+      const activity = event.data;
+      if (!activity || !['bid_submitted', 'bid_updated'].includes(activity.type)) return;
+
+      const notification = {
+        id: `${activity.bidId || activity.projectId}-${activity.createdAt}`,
+        projectId: activity.projectId,
+        projectTitle: activity.projectTitle,
+        title:
+          activity.type === 'bid_updated'
+            ? `${activity.designerName} updated a bid`
+            : `${activity.designerName} submitted a bid`,
+        detail: `${activity.projectTitle}: LKR ${Number(activity.amount).toLocaleString()} · ${activity.deliveryDays} days`,
+        createdAt: new Date(activity.createdAt),
+      };
+
+      setBidNotifications((current) => {
+        if (
+          current.some(
+            (item) => item.id === notification.id ||
+              (item.title === notification.title && item.detail === notification.detail)
+          )
+        ) return current;
+        setUnreadBidNotifications((count) => count + 1);
+        return [notification, ...current].slice(0, 20);
+      });
+      showToast(notification.title, 'success');
+    };
+
+    return () => channel.close();
+  }, [showToast]);
 
   // Modals state
   const [showProjectModal, setShowProjectModal] = useState(false);
@@ -54,6 +114,102 @@ export const AdminDashboard = ({ onViewDetails }) => {
   useEffect(() => {
     fetchDashboardData();
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const pollBidActivity = async () => {
+      try {
+        const projectsRes = await api.getProjects();
+        if (!projectsRes.success || cancelled) return;
+
+        const projectList = projectsRes.data || [];
+        const bidLists = await Promise.all(
+          projectList.map(async (project) => {
+            const bidRes = await api.getProjectBids(project._id);
+            return bidRes.success
+              ? (bidRes.data || []).map((bid) => ({
+                  ...bid,
+                  projectId: project._id,
+                  projectTitle: project.title,
+                }))
+              : [];
+          })
+        );
+        const allBids = bidLists.flat();
+
+        allBids.forEach((bid) => {
+          const signature = [
+            bid.updatedAt,
+            bid.amount,
+            bid.deliveryDays,
+            bid.proposalText || '',
+            bid.status,
+            (bid.revisions || []).map((revision) =>
+              `${revision.amount}:${revision.deliveryDays}:${revision.createdAt}`
+            ).join('|'),
+          ].join(':');
+          const previous = seenBidSignatures.current.get(bid._id);
+
+          if (!notificationsInitialized.current) {
+            seenBidSignatures.current.set(bid._id, signature);
+            return;
+          }
+
+          if (previous && previous !== signature) {
+            const notification = {
+              id: `${bid._id}-${Date.now()}`,
+              projectId: bid.project?._id || bid.project,
+              projectTitle: bid.projectTitle,
+              title: `${bid.designer?.name || 'A designer'} updated a bid`,
+              detail: `${bid.projectTitle}: LKR ${bid.amount?.toLocaleString()} · ${bid.deliveryDays} days`,
+              createdAt: bid.updatedAt || new Date(),
+            };
+            setBidNotifications((current) =>
+              current.some((item) => item.title === notification.title && item.detail === notification.detail)
+                ? current
+                : (() => {
+                    setUnreadBidNotifications((count) => count + 1);
+                    return [notification, ...current].slice(0, 20);
+                  })()
+            );
+            showToast(notification.title, 'success');
+          } else if (!previous) {
+            const notification = {
+              id: `${bid._id}-${Date.now()}`,
+              projectId: bid.project?._id || bid.project,
+              projectTitle: bid.projectTitle,
+              title: `${bid.designer?.name || 'A designer'} submitted a bid`,
+              detail: `${bid.projectTitle}: LKR ${bid.amount?.toLocaleString()} · ${bid.deliveryDays} days`,
+              createdAt: bid.createdAt || new Date(),
+            };
+            setBidNotifications((current) =>
+              current.some((item) => item.title === notification.title && item.detail === notification.detail)
+                ? current
+                : (() => {
+                    setUnreadBidNotifications((count) => count + 1);
+                    return [notification, ...current].slice(0, 20);
+                  })()
+            );
+            showToast(notification.title, 'success');
+          }
+
+          seenBidSignatures.current.set(bid._id, signature);
+        });
+
+        notificationsInitialized.current = true;
+      } catch {
+        // Keep the dashboard available; the next polling cycle will retry.
+      }
+    };
+
+    pollBidActivity();
+    const intervalId = window.setInterval(pollBidActivity, 10000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [showToast]);
 
   const handleToggleBidding = async (projectId, newStatus) => {
     try {
@@ -108,6 +264,136 @@ export const AdminDashboard = ({ onViewDetails }) => {
         </div>
 
         <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <div style={{ position: 'relative' }}>
+            <button
+              type="button"
+              className="btn btn-secondary btn-icon-only"
+              onClick={() => {
+                setShowBidNotifications((visible) => {
+                  if (!visible) setUnreadBidNotifications(0);
+                  return !visible;
+                });
+              }}
+              title="Bid notifications"
+              aria-label={`Bid notifications, ${unreadBidNotifications} unread`}
+              style={{ position: 'relative' }}
+            >
+              <Bell size={16} />
+              {unreadBidNotifications > 0 && (
+                <span
+                  style={{
+                    position: 'absolute',
+                    top: '-5px',
+                    right: '-5px',
+                    minWidth: '18px',
+                    height: '18px',
+                    borderRadius: '9999px',
+                    background: '#000000',
+                    color: '#ffffff',
+                    border: '2px solid #ffffff',
+                    fontSize: '10px',
+                    lineHeight: '14px',
+                    textAlign: 'center',
+                    fontVariantNumeric: 'tabular-nums',
+                  }}
+                >
+                  {unreadBidNotifications}
+                </span>
+              )}
+            </button>
+            {showBidNotifications && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '52px',
+                  left: '0',
+                  zIndex: 70,
+                  width: '340px',
+                  maxHeight: '420px',
+                  overflowY: 'auto',
+                  border: '1px solid #d9d9d9',
+                  borderRadius: '8px',
+                  background: '#ffffff',
+                  boxShadow: '0 10px 30px rgba(0,0,0,0.12)',
+                  padding: '8px',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px' }}>
+                  <strong style={{ fontSize: '15px', color: '#000000' }}>Bid Notifications</strong>
+                  {bidNotifications.length > 0 && (
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-secondary"
+                      onClick={() => {
+                        setBidNotifications([]);
+                        setUnreadBidNotifications(0);
+                      }}
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+                {bidNotifications.length === 0 ? (
+                  <p style={{ padding: '16px 8px', color: '#595959', fontSize: '13px' }}>No bid activity yet.</p>
+                ) : (
+                  bidNotifications.map((notification) => (
+                    <button
+                      type="button"
+                      key={notification.id}
+                      onClick={() => {
+                        const project = projects.find(
+                          (item) => item._id === notification.projectId
+                        );
+                        setShowBidNotifications(false);
+                        if (project) {
+                          setAwardProjectTarget(project);
+                        } else if (notification.projectId) {
+                          api.getProjectById(notification.projectId).then((response) => {
+                            if (response.success) setAwardProjectTarget(response.data);
+                          }).catch(() => {});
+                        }
+                      }}
+                      style={{
+                        width: '100%',
+                        display: 'block',
+                        textAlign: 'left',
+                        background: '#ffffff',
+                        border: 'none',
+                        borderTop: '1px solid #d9d9d9',
+                        padding: '12px 8px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <div style={{ fontSize: '14px', fontWeight: 600, color: '#000000' }}>
+                        {notification.title}
+                      </div>
+                      <div style={{ fontSize: '13px', color: '#595959', marginTop: '3px' }}>
+                        {notification.detail}
+                      </div>
+                      {notification.createdAt && (
+                        <div
+                          style={{
+                            fontSize: '11px',
+                            color: '#595959',
+                            marginTop: '6px',
+                            fontVariantNumeric: 'tabular-nums',
+                          }}
+                        >
+                          {new Date(notification.createdAt).toLocaleString(undefined, {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </div>
+                      )}
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
           <button
             onClick={fetchDashboardData}
             className="btn btn-secondary"

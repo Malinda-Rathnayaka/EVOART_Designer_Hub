@@ -34,6 +34,14 @@ const bidSchema = new mongoose.Schema(
       enum: ['submitted', 'accepted', 'rejected', 'withdrawn'],
       default: 'submitted',
     },
+    revisions: [
+      {
+        amount: { type: Number, required: true },
+        proposalText: { type: String, trim: true, default: '' },
+        deliveryDays: { type: Number, required: true, min: 1 },
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
   },
   {
     timestamps: true,

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import {
@@ -62,6 +62,11 @@ export const ProjectCard = ({
     return file.filename ? api.getFileUrl('references', file.filename) : null;
   };
   const primaryImageUrl = getPrimaryImageUrl(primaryImage);
+  const [imageFailed, setImageFailed] = useState(false);
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [primaryImageUrl]);
 
   return (
     <div
@@ -87,7 +92,7 @@ export const ProjectCard = ({
         }}
         onClick={() => onViewDetails(project)}
       >
-        {primaryImageUrl ? (
+        {primaryImageUrl && !imageFailed ? (
           <>
             <img
               src={primaryImageUrl}
@@ -101,6 +106,7 @@ export const ProjectCard = ({
               }}
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
+                setImageFailed(true);
               }}
             />
             {/* Neutral overlay keeps image labels legible without changing the image. */}

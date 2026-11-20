@@ -43,6 +43,14 @@ export const ReviewModal = ({ submission, assignment, onClose, onSuccess }) => {
           'warning'
         );
       }
+      if ('BroadcastChannel' in window) {
+        const channel = new BroadcastChannel('evo-art-assignment-events');
+        channel.postMessage({
+          type: 'slot_changed',
+          action: decision === 'approve' ? 'approved' : 'revision_requested',
+        });
+        channel.close();
+      }
       onSuccess();
       onClose();
     } catch (err) {

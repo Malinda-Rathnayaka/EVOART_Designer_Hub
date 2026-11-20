@@ -11,7 +11,7 @@ const {
 // @access  Private (Admin only)
 const awardProject = async (req, res, next) => {
   try {
-    const { projectId, bidId, adminNotes } = req.body;
+    const { projectId, bidId, revisionId, adminNotes } = req.body;
 
     if (!projectId || !bidId) {
       return res.status(400).json({
@@ -23,6 +23,7 @@ const awardProject = async (req, res, next) => {
     const assignment = await awardAssignment({
       projectId,
       bidId,
+      revisionId,
       adminNotes,
     });
 

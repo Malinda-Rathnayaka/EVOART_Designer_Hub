@@ -14,6 +14,11 @@ export const CancelModal = ({ assignment, onClose, onSuccess }) => {
     try {
       await api.cancelAssignment(assignment._id, reason);
       showToast('Assignment formally cancelled and designer slot released.', 'success');
+      if ('BroadcastChannel' in window) {
+        const channel = new BroadcastChannel('evo-art-assignment-events');
+        channel.postMessage({ type: 'slot_changed', action: 'cancelled' });
+        channel.close();
+      }
       onSuccess();
       onClose();
     } catch (err) {

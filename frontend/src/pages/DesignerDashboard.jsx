@@ -43,6 +43,20 @@ export const DesignerDashboard = ({ onViewDetails }) => {
     fetchProjects();
   }, []);
 
+  useEffect(() => {
+    let channel;
+    if ('BroadcastChannel' in window) {
+      channel = new BroadcastChannel('evo-art-assignment-events');
+      channel.onmessage = () => refreshUser();
+    }
+
+    const intervalId = window.setInterval(() => refreshUser(), 10000);
+    return () => {
+      if (channel) channel.close();
+      window.clearInterval(intervalId);
+    };
+  }, [refreshUser]);
+
   const handleOpenBidModal = (project, existingBid) => {
     setBidModalTarget(project);
     setExistingBidTarget(existingBid || null);
@@ -68,10 +82,8 @@ export const DesignerDashboard = ({ onViewDetails }) => {
         style={{
           padding: '1.5rem',
           marginBottom: '2rem',
-          background: isFullCapacity
-            ? 'linear-gradient(135deg, rgba(244, 63, 94, 0.12) 0%, rgba(18, 24, 40, 0.8) 100%)'
-            : 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(18, 24, 40, 0.8) 100%)',
-          borderColor: isFullCapacity ? 'rgba(244, 63, 94, 0.3)' : 'rgba(99, 102, 241, 0.25)',
+          background: '#ffffff',
+          borderColor: '#d9d9d9',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -86,12 +98,14 @@ export const DesignerDashboard = ({ onViewDetails }) => {
             </h1>
             <span
               style={{
-                fontSize: '0.75rem',
-                padding: '0.2rem 0.5rem',
+                fontSize: '12px',
+                padding: '4px 8px',
                 borderRadius: '4px',
-                background: 'rgba(6, 182, 212, 0.15)',
-                color: 'var(--accent-cyan)',
+                background: '#000000',
+                color: '#ffffff',
                 fontWeight: 600,
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
               }}
             >
               Verified Designer

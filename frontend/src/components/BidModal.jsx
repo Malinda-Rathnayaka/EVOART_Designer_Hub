@@ -4,7 +4,7 @@ import { api } from '../services/api';
 import { X, ShieldCheck, DollarSign, Calendar, AlertCircle } from 'lucide-react';
 
 export const BidModal = ({ project, existingBid, onClose, onSuccess }) => {
-  const { showToast } = useAuth();
+  const { user, showToast } = useAuth();
   const [amount, setAmount] = useState(existingBid ? existingBid.amount : '');
   const [deliveryDays, setDeliveryDays] = useState(existingBid ? existingBid.deliveryDays : 3);
   const [proposalText, setProposalText] = useState(existingBid ? existingBid.proposalText : '');
@@ -31,21 +31,36 @@ export const BidModal = ({ project, existingBid, onClose, onSuccess }) => {
 
     setSubmitting(true);
     try {
+      let submittedBid;
       if (existingBid) {
-        await api.updateBid(existingBid._id, {
+        submittedBid = await api.updateBid(existingBid._id, {
           amount: numAmount,
           deliveryDays: Number(deliveryDays),
           proposalText,
         });
         showToast('Your bid was successfully updated!', 'success');
       } else {
-        await api.submitBid({
+        submittedBid = await api.submitBid({
           projectId: project._id,
           amount: numAmount,
           deliveryDays: Number(deliveryDays),
           proposalText,
         });
         showToast('Your private bid was successfully placed!', 'success');
+      }
+      if ('BroadcastChannel' in window) {
+        const channel = new BroadcastChannel('evo-art-bid-events');
+        channel.postMessage({
+          type: existingBid ? 'bid_updated' : 'bid_submitted',
+          bidId: submittedBid?.data?._id || existingBid?._id,
+          projectId: project._id,
+          projectTitle: project.title,
+          designerName: user?.name || 'A designer',
+          amount: numAmount,
+          deliveryDays: Number(deliveryDays),
+          createdAt: new Date().toISOString(),
+        });
+        channel.close();
       }
       onSuccess();
       onClose();

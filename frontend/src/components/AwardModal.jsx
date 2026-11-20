@@ -27,6 +27,7 @@ export const AwardModal = ({ project, onClose, onSuccess }) => {
   const [awardingBidId, setAwardingBidId] = useState(null);
   const [adminNotes, setAdminNotes] = useState('');
   const [selectedBid, setSelectedBid] = useState(null);
+  const [selectedRevision, setSelectedRevision] = useState(null);
   const [sortBy, setSortBy] = useState('price_asc'); // 'price_asc' | 'days_asc' | 'newest'
 
   const isAssigned = project?.status === 'assigned' || project?.status === 'completed';
@@ -69,6 +70,7 @@ export const AwardModal = ({ project, onClose, onSuccess }) => {
       await api.awardProject({
         projectId: project._id,
         bidId: selectedBid._id,
+        revisionId: selectedRevision?._id,
         adminNotes,
       });
 
@@ -76,6 +78,15 @@ export const AwardModal = ({ project, onClose, onSuccess }) => {
         `Assignment awarded to ${selectedBid.designer?.name || 'Designer'}!`,
         'success'
       );
+      if ('BroadcastChannel' in window) {
+        const channel = new BroadcastChannel('evo-art-assignment-events');
+        channel.postMessage({
+          type: 'slot_changed',
+          designerId: selectedBid.designer?._id || selectedBid.designer,
+          action: 'awarded',
+        });
+        channel.close();
+      }
       onSuccess();
       onClose();
     } catch (err) {
@@ -273,7 +284,16 @@ export const AwardModal = ({ project, onClose, onSuccess }) => {
                   return (
                     <div
                       key={bid._id}
-                      onClick={() => !isAssigned && !isCapacityFull && setSelectedBid(bid)}
+                      onClick={() => {
+                        if (!isAssigned && !isCapacityFull) {
+                          setSelectedBid(bid);
+                          setSelectedRevision(
+                            bid.revisions && bid.revisions.length > 0
+                              ? [...bid.revisions].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0]
+                              : null
+                          );
+                        }
+                      }}
                       style={{
                         padding: '1.15rem 1.35rem',
                         borderRadius: 'var(--radius-md)',
@@ -455,6 +475,60 @@ export const AwardModal = ({ project, onClose, onSuccess }) => {
                             Proposal Details:
                           </strong>
                           "{bid.proposalText}"
+                        </div>
+                      )}
+
+                      {bid.revisions && bid.revisions.length > 1 && (
+                        <div
+                          style={{
+                            marginBottom: '0.75rem',
+                            padding: '0.75rem',
+                            border: '1px solid #d9d9d9',
+                            borderRadius: '8px',
+                            background: '#f2f2f2',
+                          }}
+                        >
+                          <div style={{ fontSize: '12px', fontWeight: 600, color: '#595959', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px' }}>
+                            Bid Price History
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                            {[...bid.revisions]
+                              .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                              .map((revision, revisionIndex) => {
+                                const revisionSelected =
+                                  isSelected && selectedRevision?._id === revision._id;
+                                return (
+                                  <button
+                                    type="button"
+                                    key={revision._id || `${bid._id}-${revisionIndex}`}
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      if (!isAssigned && !isCapacityFull) {
+                                        setSelectedBid(bid);
+                                        setSelectedRevision(revision);
+                                      }
+                                    }}
+                                    className="btn btn-sm"
+                                    style={{
+                                      width: '100%',
+                                      justifyContent: 'space-between',
+                                      background: revisionSelected ? '#000000' : '#ffffff',
+                                      color: revisionSelected ? '#ffffff' : '#000000',
+                                      border: '1px solid #000000',
+                                      fontVariantNumeric: 'tabular-nums',
+                                    }}
+                                  >
+                                    <span>LKR {revision.amount?.toLocaleString()}</span>
+                                    <span style={{ opacity: 0.75 }}>
+                                      {revision.deliveryDays} days
+                                      {revision.createdAt
+                                        ? ` · ${new Date(revision.createdAt).toLocaleDateString()}`
+                                        : ''}
+                                    </span>
+                                  </button>
+                                );
+                              })}
+                          </div>
                         </div>
                       )}
 

@@ -258,7 +258,7 @@ export const ProjectDetailsPage = ({ project: initialProject, onBack, onNavigate
                     </span>
                   </div>
                   <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginTop: '0.25rem' }}>
-                    All private proposals submitted below the ${project.initialPrice?.toLocaleString()} budget limit
+                    All private proposals submitted below the LKR {project.initialPrice?.toLocaleString()} budget limit
                   </div>
                 </div>
 
@@ -386,10 +386,10 @@ export const ProjectDetailsPage = ({ project: initialProject, onBack, onNavigate
                                 color: isWinning ? 'var(--accent-emerald)' : 'var(--text-main)',
                               }}
                             >
-                              ${bid.amount}
+                              LKR {bid.amount}
                             </div>
                             <div style={{ fontSize: '0.74rem', color: 'var(--accent-emerald)', fontWeight: 600 }}>
-                              Save ${savings} (-{savingsPct}%)
+                              Save LKR {savings} (-{savingsPct}%)
                             </div>
                           </div>
                         </div>
@@ -479,7 +479,7 @@ export const ProjectDetailsPage = ({ project: initialProject, onBack, onNavigate
               Initial Project Price
             </div>
             <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'baseline', marginBottom: '1.25rem' }}>
-              <span style={{ color: 'var(--accent-emerald)', marginRight: 2 }}>$</span>
+              <span style={{ color: 'var(--accent-emerald)', marginRight: 2 }}>LKR</span>
               {project.initialPrice?.toLocaleString()}
             </div>
 
@@ -526,7 +526,7 @@ export const ProjectDetailsPage = ({ project: initialProject, onBack, onNavigate
                         >
                           <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>Your Private Bid</div>
                           <div style={{ fontSize: '1.35rem', fontWeight: 800, color: '#818cf8' }}>
-                            ${project.myBid.amount}
+                            LKR {project.myBid.amount}
                           </div>
                           <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
                             Delivery: {project.myBid.deliveryDays} Days • Status: {project.myBid.status}

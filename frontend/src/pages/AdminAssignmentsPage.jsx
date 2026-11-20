@@ -225,7 +225,7 @@ export const AdminAssignmentsPage = () => {
                       Designer: <strong style={{ color: 'var(--text-main)' }}>{item.designer?.name}</strong> ({item.designer?.email})
                     </span>
                     <span>
-                      Agreed Price: <strong style={{ color: 'var(--accent-emerald)' }}>${item.agreedPrice}</strong>
+                      Agreed Price: <strong style={{ color: 'var(--accent-emerald)' }}>LKR {item.agreedPrice}</strong>
                     </span>
                   </div>
                 </div>

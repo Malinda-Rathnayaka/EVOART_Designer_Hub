@@ -272,7 +272,7 @@ export const ProjectCard = ({
               Initial Price
             </div>
             <div style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center' }}>
-              <span style={{ color: 'var(--accent-emerald)', marginRight: 2 }}>$</span>
+              <span style={{ color: 'var(--accent-emerald)', marginRight: 4 }}>LKR</span>
               {project.initialPrice?.toLocaleString()}
             </div>
           </div>
@@ -315,7 +315,7 @@ export const ProjectCard = ({
           >
             <div>
               <span style={{ color: 'var(--text-muted)' }}>Your Private Bid: </span>
-              <strong style={{ color: '#818cf8' }}>${project.myBid.amount}</strong>
+              <strong style={{ color: '#818cf8' }}>LKR {project.myBid.amount}</strong>
             </div>
             <span
               style={{

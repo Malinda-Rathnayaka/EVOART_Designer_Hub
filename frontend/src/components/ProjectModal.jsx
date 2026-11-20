@@ -173,7 +173,7 @@ export const ProjectModal = ({ onClose, onSuccess, project }) => {
               </div>
 
               <div className="form-group">
-                <label className="form-label">Initial Project Price ($USD) *</label>
+                <label className="form-label">Initial Project Price (LKR) *</label>
                 <input
                   type="number"
                   className="form-control"

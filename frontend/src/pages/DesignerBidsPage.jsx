@@ -152,10 +152,10 @@ export const DesignerBidsPage = ({ onViewDetails }) => {
 
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.25rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
                     <div>
-                      Initial Project Price: <strong style={{ color: 'var(--text-main)' }}>${project.initialPrice}</strong>
+                      Initial Project Price: <strong style={{ color: 'var(--text-main)' }}>LKR {project.initialPrice}</strong>
                     </div>
                     <div>
-                      Your Private Bid: <strong style={{ color: 'var(--accent-emerald)' }}>${bid.amount}</strong>
+                      Your Private Bid: <strong style={{ color: 'var(--accent-emerald)' }}>LKR {bid.amount}</strong>
                     </div>
                     <div>
                       Delivery: <strong style={{ color: 'var(--text-main)' }}>{bid.deliveryDays} Days</strong>

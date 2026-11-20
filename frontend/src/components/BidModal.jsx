@@ -25,7 +25,7 @@ export const BidModal = ({ project, existingBid, onClose, onSuccess }) => {
     }
 
     if (numAmount >= initialPrice) {
-      setError(`Your bid ($${numAmount}) must be strictly lower than the initial project price ($${initialPrice})`);
+      setError(`Your bid (LKR ${numAmount}) must be strictly lower than the initial project price (LKR ${initialPrice})`);
       return;
     }
 
@@ -110,7 +110,7 @@ export const BidModal = ({ project, existingBid, onClose, onSuccess }) => {
                   Initial Project Price
                 </div>
                 <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                  ${initialPrice.toLocaleString()}
+                  LKR {initialPrice.toLocaleString()}
                 </div>
               </div>
               <div style={{ textAlign: 'right' }}>
@@ -118,7 +118,7 @@ export const BidModal = ({ project, existingBid, onClose, onSuccess }) => {
                   Maximum Allowed Bid
                 </div>
                 <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--accent-emerald)' }}>
-                  Under ${initialPrice.toLocaleString()}
+                  Under LKR {initialPrice.toLocaleString()}
                 </div>
               </div>
             </div>
@@ -146,12 +146,12 @@ export const BidModal = ({ project, existingBid, onClose, onSuccess }) => {
             <div className="form-row">
               <div className="form-group">
                 <label className="form-label">
-                  Your Bid Amount ($USD) *
+                  Your Bid Amount (LKR) *
                 </label>
                 <input
                   type="number"
                   className="form-control"
-                  placeholder={`Must be < $${initialPrice}`}
+                  placeholder={`Must be < LKR ${initialPrice}`}
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   min="1"
@@ -161,7 +161,7 @@ export const BidModal = ({ project, existingBid, onClose, onSuccess }) => {
                 />
                 {isInvalidAmount && (
                   <span style={{ fontSize: '0.75rem', color: '#fb7185', marginTop: '0.2rem' }}>
-                    Bid must be strictly lower than ${initialPrice}
+                    Bid must be strictly lower than LKR {initialPrice}
                   </span>
                 )}
               </div>

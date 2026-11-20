@@ -152,7 +152,7 @@ export const DesignerAssignmentsPage = ({ onViewDetails }) => {
                   </div>
 
                   <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--accent-emerald)' }}>
-                    Agreed Contract: ${assignment.agreedPrice}
+                    Agreed Contract: LKR {assignment.agreedPrice}
                   </div>
                 </div>
 

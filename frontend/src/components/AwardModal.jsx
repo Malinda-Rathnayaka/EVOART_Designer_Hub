@@ -131,7 +131,7 @@ export const AwardModal = ({ project, onClose, onSuccess }) => {
                 {isAssigned ? 'Bidding Designers & Project Candidate History' : 'Review Bids & Award Assignment'}
               </h3>
               <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-                {project?.title} • Initial Budget: <strong style={{ color: 'var(--text-main)' }}>${project?.initialPrice?.toLocaleString()}</strong>
+                {project?.title} • Initial Budget: <strong style={{ color: 'var(--text-main)' }}>LKR {project?.initialPrice?.toLocaleString()}</strong>
               </p>
             </div>
           </div>
@@ -183,10 +183,10 @@ export const AwardModal = ({ project, onClose, onSuccess }) => {
                     Lowest Offer
                   </div>
                   <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#34d399', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                    ${lowestBid?.toLocaleString()}
+                    LKR {lowestBid?.toLocaleString()}
                     {project.initialPrice && (
                       <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#10b981' }}>
-                        (-${project.initialPrice - lowestBid})
+                        {`(-LKR ${project.initialPrice - lowestBid})`}
                       </span>
                     )}
                   </div>
@@ -197,7 +197,7 @@ export const AwardModal = ({ project, onClose, onSuccess }) => {
                     Average Bid
                   </div>
                   <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--accent-cyan)' }}>
-                    ${avgBid?.toLocaleString()}
+                    LKR {avgBid?.toLocaleString()}
                   </div>
                 </div>
 
@@ -392,11 +392,11 @@ export const AwardModal = ({ project, onClose, onSuccess }) => {
                         {/* Bid Pricing & Delivery Box */}
                         <div style={{ textAlign: 'right', flexShrink: 0 }}>
                           <div style={{ fontSize: '1.45rem', fontWeight: 800, color: 'var(--accent-emerald)', lineHeight: 1.1 }}>
-                            ${bid.amount?.toLocaleString()}
+                            LKR {bid.amount?.toLocaleString()}
                           </div>
                           {savings > 0 && (
                             <div style={{ fontSize: '0.72rem', color: '#10b981', fontWeight: 600 }}>
-                              Save ${savings} ({savingsPercent}% under budget)
+                              Save LKR {savings} ({savingsPercent}% under budget)
                             </div>
                           )}
                           <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.3rem', marginTop: '0.25rem' }}>

@@ -1,0 +1,165 @@
+# ============================================================
+#  EVO ART Designer Platform — CI/CD Pipeline
+#  GitHub Actions Workflow
+# ============================================================
+#
+#  JOBS:
+#   1. backend-test   → Install deps & run the test suite (uses in-memory MongoDB — no live DB needed)
+#   2. frontend-build → Install deps, lint with oxlint, build with Vite
+#   3. deploy         → Gated: only runs after both CI jobs pass AND only on a push to main
+#                       (placeholder — connect your hosting platform here)
+#
+#  TRIGGERS:
+#   - Every push to `main`
+#   - Every pull request targeting `main`
+# ============================================================
+
+name: CI/CD — EVO ART Designer Platform
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+# ────────────────────────────────────────────────────────────
+# JOB 1 — Backend Tests
+# Uses mongodb-memory-server (no live DB needed in CI)
+# ────────────────────────────────────────────────────────────
+jobs:
+  backend-test:
+    name: 🧪 Backend Tests (Node.js v22)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      # 1. Check out the repository code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Set up Node.js v22 (matches local dev environment)
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      # 3. Install backend dependencies (clean, reproducible install)
+      - name: Install backend dependencies
+        run: npm ci
+
+      # 4. Run the custom test suite
+      #    NODE_ENV=test → workflow.test.js auto-uses MongoMemoryServer (no MONGO_URI needed)
+      #    JWT_SECRET is provided from GitHub Secrets in case any auth utility is exercised
+      - name: Run backend test suite
+        run: npm test
+        env:
+          NODE_ENV: test
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          JWT_EXPIRE: 30d
+
+# ────────────────────────────────────────────────────────────
+# JOB 2 — Frontend Lint & Build
+# oxlint for linting, Vite for production build
+# ────────────────────────────────────────────────────────────
+  frontend-build:
+    name: 🏗️ Frontend Lint & Build (React + Vite)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      # 1. Check out the repository code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Set up Node.js v22
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      # 3. Install frontend dependencies
+      - name: Install frontend dependencies
+        run: npm ci
+
+      # 4. Lint the frontend source code with oxlint
+      - name: Lint frontend (oxlint)
+        run: npm run lint
+
+      # 5. Create a production build with Vite
+      #    This will catch any import/compile errors early
+      - name: Build frontend (Vite production build)
+        run: npm run build
+
+# ────────────────────────────────────────────────────────────
+# JOB 3 — Deploy  (GATED — reads only on push to main)
+#
+#  This job is a PLACEHOLDER. Connect your hosting platform:
+#
+#  ► Vercel    → https://github.com/marketplace/actions/deploy-to-vercel-action
+#  ► Render    → Add a Deploy Hook URL as RENDER_DEPLOY_HOOK secret and curl it
+#  ► Railway   → https://docs.railway.app/guides/github-actions
+#  ► AWS / GCP → Add the provider's official action from the Marketplace
+#
+#  Add the relevant secret(s) to:
+#  GitHub → Settings → Secrets and variables → Actions → New repository secret
+# ────────────────────────────────────────────────────────────
+  deploy:
+    name: 🚀 Deploy (Gated — connect your platform)
+    runs-on: ubuntu-latest
+
+    # Only runs after BOTH CI jobs succeed
+    needs:
+      - backend-test
+      - frontend-build
+
+    # Only deploys on a direct push to main (never on pull requests)
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      # 1. Check out the repository code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. ── CONNECT YOUR PLATFORM BELOW ─────────────────────
+      #
+      #    Example A — Vercel (frontend):
+      #    - uses: amondnet/vercel-action@v25
+      #      with:
+      #        vercel-token: ${{ secrets.VERCEL_TOKEN }}
+      #        vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+      #        vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+      #        working-directory: frontend
+      #
+      #    Example B — Render (backend via Deploy Hook):
+      #    - name: Trigger Render deploy
+      #      run: curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}
+      #
+      #    Example C — Railway (via CLI):
+      #    - uses: bervProject/railway-deploy@main
+      #      with:
+      #        railway_token: ${{ secrets.RAILWAY_TOKEN }}
+      #        service: backend
+      # ──────────────────────────────────────────────────────
+
+      - name: Deployment placeholder
+        run: |
+          echo "✅ All CI checks passed!"
+          echo "   • Backend tests: passed"
+          echo "   • Frontend lint & build: passed"
+          echo ""
+          echo "👉 To complete deployment, replace this step with your"
+          echo "   hosting platform's GitHub Action (Vercel, Render, Railway, etc.)"
+          echo ""
+          echo "   See the comments in this file for ready-to-use examples."

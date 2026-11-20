@@ -174,7 +174,7 @@ export const AdminDashboard = ({ onViewDetails }) => {
           marginBottom: '1.5rem',
         }}
       >
-        <div style={{ display: 'flex', gap: '0.5rem', background: 'rgba(255, 255, 255, 0.04)', padding: '0.3rem', borderRadius: 'var(--radius-md)' }}>
+        <div style={{ display: 'flex', gap: '8px', background: '#f2f2f2', padding: '6px', borderRadius: '8px', border: '1px solid #d9d9d9' }}>
           {[
             { id: 'all', label: `All (${projects.length})` },
             { id: 'open', label: `Bidding Open (${openBiddingCount})` },

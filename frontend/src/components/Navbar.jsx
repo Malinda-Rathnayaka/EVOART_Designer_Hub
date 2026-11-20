@@ -133,10 +133,10 @@ export const Navbar = ({ currentTab, onSelectTab, onProfileClick }) => {
                 alignItems: 'center',
                 gap: '0.65rem',
                 padding: '0.35rem 0.75rem',
-                borderRadius: 'var(--radius-md)',
-                background: 'rgba(255, 255, 255, 0.04)',
-                border: '1px solid var(--border-light)',
-                color: 'inherit',
+                borderRadius: '8px',
+                background: '#ffffff',
+                border: '1px solid #d9d9d9',
+                color: '#000000',
                 cursor: 'pointer',
               }}
             >
@@ -145,7 +145,7 @@ export const Navbar = ({ currentTab, onSelectTab, onProfileClick }) => {
                   width: '26px',
                   height: '26px',
                   borderRadius: '50%',
-                  background: isAdmin ? 'var(--accent-purple)' : 'var(--accent-cyan)',
+                  background: '#000000',
                   color: '#ffffff',
                   fontSize: '0.75rem',
                   fontWeight: 700,
@@ -158,7 +158,7 @@ export const Navbar = ({ currentTab, onSelectTab, onProfileClick }) => {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
                 <span style={{ fontSize: '0.82rem', fontWeight: 600 }}>{user.name.split(' ')[0]}</span>
-                <span style={{ fontSize: '0.68rem', color: isAdmin ? '#c084fc' : '#38bdf8', textTransform: 'capitalize' }}>
+                <span style={{ fontSize: '12px', color: '#595959', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>
                   {user.role}
                 </span>
               </div>
@@ -173,7 +173,7 @@ export const Navbar = ({ currentTab, onSelectTab, onProfileClick }) => {
                 title="Log out"
                 id="btn-logout"
               >
-                <LogOut size={14} color="#f43f5e" />
+                <LogOut size={14} color="#000000" />
               </button>
             </div>
           )}

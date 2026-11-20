@@ -58,7 +58,7 @@ export function LoginPage() {
 
         ctx.beginPath();
         ctx.arc(x, y, p.size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(175, 160, 255, ${p.opacity})`;
+        ctx.fillStyle = `rgba(89, 89, 89, ${p.opacity})`;
         ctx.fill();
       });
 

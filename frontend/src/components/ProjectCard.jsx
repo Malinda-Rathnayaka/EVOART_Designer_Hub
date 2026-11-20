@@ -46,19 +46,26 @@ export const ProjectCard = ({
   const isImageFile = (file) => {
     if (!file) return false;
     if (file.mimetype && file.mimetype.startsWith('image/')) return true;
+    if (file.storageType === 'cloudinary' && (file.url || file.path)) return true;
     const name = file.originalName || file.filename || file.path || file.url || '';
     return /\.(jpe?g|png|webp|gif|svg|avif)$/i.test(name);
   };
 
   const imageFiles = (project.referenceFiles || []).filter(isImageFile);
   const primaryImage = imageFiles[0];
-  const primaryImageUrl = primaryImage
-    ? primaryImage.url || api.getFileUrl('references', primaryImage.filename)
-    : null;
+  const getPrimaryImageUrl = (file) => {
+    if (!file) return null;
+    if (file.url && /^https?:\/\//i.test(file.url)) return file.url;
+    if (file.path && /^https?:\/\//i.test(file.path)) return file.path;
+    if (file.path && file.path.startsWith('/uploads/')) return file.path;
+    if (file.path && file.path.startsWith('/api/')) return file.path;
+    return file.filename ? api.getFileUrl('references', file.filename) : null;
+  };
+  const primaryImageUrl = getPrimaryImageUrl(primaryImage);
 
   return (
     <div
-      className="glass-card interactive-card"
+      className="glass-card interactive-card project-card"
       style={{
         display: 'flex',
         flexDirection: 'column',
@@ -69,11 +76,12 @@ export const ProjectCard = ({
     >
       {/* Top Reference Image Banner */}
       <div
+        className="project-card-media"
         style={{
           position: 'relative',
           width: '100%',
           height: '175px',
-          background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.16) 0%, rgba(6, 182, 212, 0.1) 100%)',
+          background: '#f2f2f2',
           overflow: 'hidden',
           cursor: 'pointer',
         }}
@@ -95,13 +103,13 @@ export const ProjectCard = ({
                 e.currentTarget.style.display = 'none';
               }}
             />
-            {/* Subtle Gradient Scrim for contrast */}
+            {/* Neutral overlay keeps image labels legible without changing the image. */}
             <div
               style={{
                 position: 'absolute',
                 inset: 0,
-                background:
-                  'linear-gradient(180deg, rgba(9, 12, 19, 0.4) 0%, rgba(9, 12, 19, 0.05) 50%, rgba(9, 12, 19, 0.8) 100%)',
+                zIndex: 1,
+                background: 'rgba(0, 0, 0, 0.08)',
                 pointerEvents: 'none',
               }}
             />
@@ -117,8 +125,7 @@ export const ProjectCard = ({
               alignItems: 'center',
               justifyContent: 'center',
               gap: '0.45rem',
-              background:
-                'radial-gradient(ellipse at 50% 50%, rgba(99, 102, 241, 0.22) 0%, rgba(15, 20, 34, 0.88) 100%)',
+              background: '#f2f2f2',
             }}
           >
             <div
@@ -153,16 +160,16 @@ export const ProjectCard = ({
         <div style={{ position: 'absolute', top: '0.75rem', left: '0.75rem', zIndex: 2 }}>
           <span
             style={{
-              fontSize: '0.7rem',
-              fontWeight: 700,
+              fontSize: '12px',
+              fontWeight: 600,
               color: '#ffffff',
-              background: 'rgba(15, 20, 34, 0.82)',
-              backdropFilter: 'blur(8px)',
-              padding: '0.22rem 0.55rem',
-              borderRadius: '6px',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
+              background: '#000000',
+              backdropFilter: 'none',
+              padding: '5px 8px',
+              borderRadius: '4px',
+              border: '1px solid #000000',
               textTransform: 'uppercase',
-              letterSpacing: '0.03em',
+              letterSpacing: '0.08em',
               display: 'inline-block',
             }}
           >
@@ -173,17 +180,17 @@ export const ProjectCard = ({
         {/* Floating Bidding Status Badge (Top Right) */}
         <div style={{ position: 'absolute', top: '0.75rem', right: '0.75rem', zIndex: 2 }}>
           {isAssigned ? (
-            <span className="badge badge-progress" style={{ backdropFilter: 'blur(8px)' }}>
+            <span className="badge badge-progress" style={{ background: '#000000', color: '#ffffff', border: '1px solid #000000', backdropFilter: 'none' }}>
               <CheckCircle2 size={12} />
               Assigned
             </span>
           ) : isBiddingOpen ? (
-            <span className="badge badge-open" style={{ backdropFilter: 'blur(8px)' }}>
+            <span className="badge badge-open" style={{ background: '#000000', color: '#ffffff', border: '1px solid #000000', backdropFilter: 'none' }}>
               <Unlock size={12} />
               Bidding Open
             </span>
           ) : (
-            <span className="badge badge-closed" style={{ backdropFilter: 'blur(8px)' }}>
+            <span className="badge badge-closed" style={{ background: '#d9d9d9', color: '#000000', border: '1px solid #d9d9d9', backdropFilter: 'none' }}>
               <Lock size={12} />
               Bidding Closed
             </span>
@@ -198,14 +205,14 @@ export const ProjectCard = ({
               bottom: '0.65rem',
               right: '0.75rem',
               zIndex: 2,
-              fontSize: '0.7rem',
+              fontSize: '12px',
               fontWeight: 600,
               color: '#ffffff',
-              background: 'rgba(15, 20, 34, 0.85)',
-              backdropFilter: 'blur(8px)',
-              padding: '0.2rem 0.55rem',
-              borderRadius: '6px',
-              border: '1px solid rgba(255, 255, 255, 0.12)',
+              background: '#000000',
+              backdropFilter: 'none',
+              padding: '5px 8px',
+              borderRadius: '4px',
+              border: '1px solid #000000',
               display: 'flex',
               alignItems: 'center',
               gap: '0.35rem',
@@ -221,15 +228,17 @@ export const ProjectCard = ({
       </div>
 
       {/* Card Content Body */}
-      <div style={{ padding: '1.25rem 1.4rem', flex: 1, display: 'flex', flexDirection: 'column' }}>
+      <div className="project-card-body" style={{ padding: '20px 22px', flex: 1, display: 'flex', flexDirection: 'column' }}>
         {/* Project Title */}
         <h3
+          className="project-card-title"
           style={{
-            fontSize: '1.15rem',
-            marginBottom: '0.5rem',
+            fontSize: '18px',
+            marginBottom: '8px',
             cursor: 'pointer',
             lineHeight: 1.35,
-            fontWeight: 700,
+            fontWeight: 600,
+            color: '#000000',
           }}
           onClick={() => onViewDetails(project)}
           title={project.title}
@@ -239,10 +248,11 @@ export const ProjectCard = ({
 
         {/* Description snippet */}
         <p
+          className="project-card-description"
           style={{
-            fontSize: '0.86rem',
-            color: 'var(--text-muted)',
-            marginBottom: '1rem',
+            fontSize: '15px',
+            color: '#595959',
+            marginBottom: '16px',
             flex: 1,
             display: '-webkit-box',
             WebkitLineClamp: 2,
@@ -256,36 +266,37 @@ export const ProjectCard = ({
 
         {/* Project Key Metrics */}
         <div
+          className="project-card-metrics"
           style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1fr',
-            gap: '0.75rem',
-            padding: '0.75rem 0.9rem',
-            background: 'rgba(255, 255, 255, 0.02)',
-            borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--border-subtle)',
-            marginBottom: '1rem',
+            gap: '12px',
+            padding: '12px',
+            background: '#f2f2f2',
+            borderRadius: '8px',
+            border: '1px solid #d9d9d9',
+            marginBottom: '16px',
           }}
         >
           <div>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', fontWeight: 600 }}>
+            <div style={{ fontSize: '12px', color: '#595959', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.08em' }}>
               Initial Price
             </div>
-            <div style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center' }}>
-              <span style={{ color: 'var(--accent-emerald)', marginRight: 4 }}>LKR</span>
+            <div style={{ fontSize: '16px', fontWeight: 600, color: '#000000', display: 'flex', alignItems: 'center', fontVariantNumeric: 'tabular-nums' }}>
+              <span style={{ color: '#595959', marginRight: 4 }}>LKR</span>
               {project.initialPrice?.toLocaleString()}
             </div>
           </div>
 
           <div>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', fontWeight: 600 }}>
+            <div style={{ fontSize: '12px', color: '#595959', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.08em' }}>
               Deadline
             </div>
             <div
               style={{
                 fontSize: '0.85rem',
                 fontWeight: 600,
-                color: daysLeft <= 3 ? '#fb7185' : 'var(--text-main)',
+                color: '#000000',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.35rem',
@@ -397,7 +408,7 @@ export const ProjectCard = ({
         )}
 
         {/* Actions Bar */}
-        <div style={{ display: 'flex', gap: '0.5rem', marginTop: 'auto' }}>
+        <div className={`project-card-actions ${isAdmin ? 'is-admin' : ''}`} style={{ display: 'grid', gap: '8px', marginTop: 'auto' }}>
           {isAdmin ? (
             <>
               <button
